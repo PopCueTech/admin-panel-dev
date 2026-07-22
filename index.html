@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PopCue AI Survey Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="auth.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Auth Screen -->
+    <div id="authSection">
+        <div class="auth-section">
+            <div class="auth-section-logo">
+                <div class="auth-section-logo-mark">PC</div>
+                <span class="auth-section-logo-name">PopCue</span>
+            </div>
+            <h2>Sign in</h2>
+            <p class="auth-section-subtitle">Admin panel — enter your credentials to continue</p>
+            <div class="form-group">
+                <label for="authEmail">Email</label>
+                <input type="email" id="authEmail" placeholder="your@email.com" required>
+            </div>
+            <div class="form-group">
+                <label for="authPassword">Password</label>
+                <input type="password" id="authPassword" placeholder="Your password" required>
+            </div>
+            <button id="loginBtn" class="btn btn-primary" onclick="login()" style="width: 100%; margin-top: 4px;">Sign in</button>
+            <p class="auth-hint" style="margin-top: 16px;">Use your PopCue account credentials</p>
+        </div>
+    </div>
+
+    <!-- App Shell (shown after login) -->
+    <div id="app" style="display: none;">
+
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">PC</div>
+                <span class="sidebar-title">PopCue</span>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-group">
+                    <div class="nav-group-label">Analytics</div>
+                    <div class="nav-item active" data-section="dashboard">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+                        Dashboard
+                    </div>
+                    <div class="nav-item" data-section="surveys">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Surveys
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-group-label">Campaigns</div>
+                    <div class="nav-item" data-section="create">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M8 5v6M5 8h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Create survey
+                    </div>
+                    <div class="nav-item" data-section="notifications">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6a4 4 0 018 0c0 2 1 3 1.5 4H2.5C3 9 4 8 4 6z" stroke="currentColor" stroke-width="1.2"/><path d="M6 10v1a2 2 0 004 0v-1" stroke="currentColor" stroke-width="1.2"/></svg>
+                        Notifications
+                    </div>
+                    <div class="nav-item" data-section="email">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="3" width="13" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 4.5L8 9l6.5-4.5" stroke="currentColor" stroke-width="1.2"/></svg>
+                        Email broadcast
+                    </div>
+                    <div class="nav-item" data-section="panels">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2"/><circle cx="11" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M2 10h4c1.1 0 2 .9 2 2v2H2v-2c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.2"/><path d="M8 10h4c1.1 0 2 .9 2 2v2H8v-2c0-1.1.9-2 2-2z" stroke="currentColor" stroke-width="1.2"/></svg>
+                        Panels
+                    </div>
+                    <div class="nav-item" data-section="profile-questionnaires">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="2.5" stroke="currentColor" stroke-width="1.2"/><path d="M3 14c0-2.5 2-4.5 5-4.5s5 2 5 4.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Profile questionnaires
+                    </div>
+                    <div class="nav-item" data-section="profile-attributes">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 13V9M6 13V6M10 13V3M14 13V7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                        Profile attributes
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-group-label">Rewards</div>
+                    <div class="nav-item" data-section="redemptions">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="6.5" width="12" height="7.5" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M1 6.5h14M8 6.5V14M8 6.5C8 6.5 6.8 3 4.8 3.6 3.2 4.1 4.4 6.5 8 6.5zM8 6.5C8 6.5 9.2 3 11.2 3.6 12.8 4.1 11.6 6.5 8 6.5z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+                        Redemptions
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-group-label">Quality</div>
+                    <div class="nav-item" data-section="user-quality">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5l5 2v3.2c0 3-2.1 5.3-5 6.3-2.9-1-5-3.3-5-6.3V3.5l5-2z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M6 8l1.4 1.4L10.5 6.3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        User quality
+                    </div>
+                </div>
+                <div class="nav-group">
+                    <div class="nav-group-label">Utilities</div>
+                    <div class="nav-item" data-section="backfill-demographics">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 8a6 6 0 0111.3-2.8M14 8a6 6 0 01-11.3 2.8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M13 2v3h-3M3 14v-3h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Backfill demographics
+                    </div>
+                    <div class="nav-item" data-section="backfill-metrics">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 12l3.5-4 3 3 3.5-5L15 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Backfill metrics
+                    </div>
+                    <div class="nav-item" data-section="validator">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.5 12L13 4.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Survey validator
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="mainContent">
+            <header class="content-header">
+                <div class="content-header-title">
+                    <h1 id="pageTitle">Dashboard</h1>
+                    <p id="pageSubtitle" class="content-header-sub"></p>
+                </div>
+                <div class="content-header-actions">
+                    <button id="logoutBtn" class="btn btn-secondary btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </header>
+
+            <div id="mainPanel" class="content-body">
+
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="dashboard-section" style="display: none;">
+                <div class="dashboard-header">
+                    <h2>Admin Dashboard</h2>
+                    <div class="dashboard-controls">
+                        <select id="timeFilter" onchange="loadDashboard()">
+                            <option value="24h">Last 24 Hours</option>
+                            <option value="7d">Last 7 Days</option>
+                            <option value="30d">Last 30 Days</option>
+                            <option value="all" selected>All Time</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="refreshDashboard()">🔄 Refresh</button>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <!-- User Stats -->
+                    <div class="stat-card">
+                        <h3>Users</h3>
+                        <div class="stat-value" id="totalUsers">-</div>
+                        <div class="stat-label">Total Users</div>
+                        <div class="stat-sub">
+                            <span><strong id="activeUsers">-</strong> Active</span>
+                            <span><strong id="newSignups">-</strong> New Signups</span>
+                        </div>
+                        <div class="stat-growth" id="userGrowth">-</div>
+                    </div>
+
+                    <!-- Survey Stats -->
+                    <div class="stat-card">
+                        <h3>Surveys</h3>
+                        <div class="stat-value" id="completedSurveys">-</div>
+                        <div class="stat-label">Completed</div>
+                        <div class="stat-sub">
+                            <span><strong id="totalSurveys">-</strong> Total</span>
+                            <span><strong id="publishedSurveys">-</strong> Published</span>
+                        </div>
+                        <div class="stat-sub">
+                            <span><strong id="incompleteSurveys">-</strong> Incomplete</span>
+                        </div>
+                        <div class="stat-metric">Completion: <strong id="completionRate">-</strong></div>
+                    </div>
+
+                    <!-- Reward Stats -->
+                    <div class="stat-card">
+                        <h3>Rewards</h3>
+                        <div class="stat-value" id="pointsCirculation">-</div>
+                        <div class="stat-label">Points in Circulation</div>
+                        <div class="stat-sub">
+                            <span><strong id="totalEarned">-</strong> Earned</span>
+                            <span><strong id="totalRedeemed">-</strong> Redeemed</span>
+                        </div>
+                        <div class="stat-metric">Redemption: <strong id="redemptionRate">-</strong></div>
+                    </div>
+
+                    <!-- Voucher Stats -->
+                    <div class="stat-card">
+                        <h3>Vouchers</h3>
+                        <div class="stat-value" id="voucherCount">-</div>
+                        <div class="stat-label">Redemptions</div>
+                        <div class="stat-sub">
+                            <span>Total Value: <strong id="voucherValue">-</strong></span>
+                        </div>
+                        <div class="top-brands">
+                            <strong>Top Brands:</strong>
+                            <ul id="topBrands"></ul>
+                        </div>
+                    </div>
+
+                    <!-- Referral Stats -->
+                    <div class="stat-card">
+                        <h3>Referrals</h3>
+                        <div class="stat-value" id="referralSignups">-</div>
+                        <div class="stat-label">Total Signups</div>
+                        <div class="stat-sub">
+                            <span><strong id="newReferrals">-</strong> New</span>
+                        </div>
+                        <div class="stat-metric">Conversion: <strong id="referralConversion">-</strong></div>
+                    </div>
+
+                    <!-- Withdrawal Progress -->
+                    <div class="stat-card">
+                        <h3>CueCoin Withdrawals</h3>
+                        <div class="stat-value" id="eligibleForWithdrawal">-</div>
+                        <div class="stat-label">Eligible Now (500+)</div>
+                        <div class="stat-sub">
+                            <span><strong id="closeToWithdrawal">-</strong> Close (400-499)</span>
+                            <span><strong id="halfwayToWithdrawal">-</strong> Halfway (250-399)</span>
+                        </div>
+                        <div class="stat-metric">Out of <strong id="withdrawalTotalUsers">-</strong> total users</div>
+                    </div>
+                </div>
+
+                <div class="cache-info" id="cacheInfo">
+                    <small>Cached: <span id="cacheAge">-</span> | Expires in: <span id="cacheExpires">-</span></small>
+                </div>
+
+                <!-- Drop-off / Abandonment Analytics -->
+                <div class="details-card" id="abandonmentCard" style="margin-top: 20px;">
+                    <div class="abandon-header">
+                        <div>
+                            <h3>Survey Drop-off Analytics</h3>
+                            <p class="abandon-caveat">Where users quit before completing. Abandonment is inferred from inactivity (see "Stale after"); the drop-off question is the one after the last answered (≈ +1). Standard surveys only.</p>
+                        </div>
+                        <div class="abandon-controls">
+                            <label for="abandonmentStaleHours">Stale after</label>
+                            <select id="abandonmentStaleHours" onchange="loadAbandonment()">
+                                <option value="6">6 hours</option>
+                                <option value="12">12 hours</option>
+                                <option value="24" selected>24 hours</option>
+                                <option value="72">3 days</option>
+                                <option value="168">7 days</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="abandon-subtitle">Completion Leaderboard</div>
+                    <div class="abandon-table-wrap">
+                        <table class="abandon-table" id="abandonmentLeaderboard">
+                            <thead>
+                                <tr>
+                                    <th>Survey</th>
+                                    <th>Started</th>
+                                    <th>Completed</th>
+                                    <th>Abandoned</th>
+                                    <th>Active</th>
+                                    <th>Completion</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="6" class="abandon-empty">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="abandonmentDetail" style="display: none;">
+                        <div class="abandon-subtitle" id="abandonmentDetailTitle">Per-survey Drop-off</div>
+                        <div class="kpi-grid" id="abandonmentKpis"></div>
+
+                        <div class="abandon-subtitle">Drop-off Funnel <span class="abandon-hint">(bar length = users who reached the question; red = higher abandon rate there)</span></div>
+                        <div class="abandon-chart-wrap">
+                            <canvas id="abandonmentFunnelChart"></canvas>
+                        </div>
+
+                        <div class="abandon-subtitle">Per-question Friction</div>
+                        <div class="abandon-table-wrap">
+                            <table class="abandon-table" id="abandonmentFriction">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Question</th>
+                                        <th>Type</th>
+                                        <th>Answers</th>
+                                        <th>Median time</th>
+                                        <th>Avg changes</th>
+                                        <th>Median latency</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Survey Form -->
+            <div id="surveyFormSection" style="display: none;">
+            <form id="surveyForm" class="survey-form">
+                <h2>Create AI Survey</h2>
+
+                <div class="form-group">
+                    <label for="surveyName">Survey Name *</label>
+                    <input type="text" id="surveyName" placeholder="e.g., Product Launch Feedback" required minlength="5" maxlength="500">
+                    <small id="nameCount" class="char-count">0/500</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="surveyDescription">Description *</label>
+                    <textarea id="surveyDescription" placeholder="e.g., We're testing user reactions to our new design" required minlength="10" maxlength="2000"></textarea>
+                    <small id="descCount" class="char-count">0/2000</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="surveyContext">Context & Requirements * (detailed)</label>
+                    <textarea id="surveyContext" placeholder="e.g., Create 8 questions about design appeal, pricing, purchase intent. Include 5-point rating scales. Target product test for millennial professionals." required minlength="20" maxlength="50000"></textarea>
+                    <small id="contextCount" class="char-count">0/50000</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="surveyType">Survey Type *</label>
+                    <select id="surveyType" required onchange="onSurveyTypeChange()">
+                        <option value="" disabled selected>-- Select Survey Type --</option>
+                        <option value="claim_message">Claim / Message Testing</option>
+                        <option value="packaging_design">Packaging / Design Testing</option>
+                        <option value="concept_test">Concept Testing</option>
+                    </select>
+                </div>
+
+                <!-- Survey Concept Type Toggle -->
+                <div class="form-group">
+                    <label>Survey Concept Type</label>
+                    <div style="display: flex; gap: 16px; margin-top: 8px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="conceptType" id="singleConcept" value="single" checked>
+                            Single Concept
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="conceptType" id="multiConcept" value="multi">
+                            Multi Concept
+                        </label>
+                    </div>
+                </div>
+
+                <!-- ss: concept cards for packaging_design / concept_test -->
+                <div id="conceptBuilderSection" style="display:none;">
+                    <div class="form-group">
+                        <label>Concepts to Test *</label>
+                        <small style="color:#9ca3af;display:block;margin-bottom:8px;">Upload images directly using the file picker in each concept card.</small>
+                        <div id="conceptCards"></div>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addConceptCard()" style="margin-top:8px;">+ Add Concept</button>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="surveyPoints">Points Reward</label>
+                        <input type="number" id="surveyPoints" value="0" min="0" max="500">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="maxResponses">Max Responses</label>
+                        <input type="number" id="maxResponses" value="100" min="1" max="10000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tenantId">Tenant ID *</label>
+                        <select id="tenantId" required>
+                            <option value="">Select Organization</option>
+                            <!-- Populated from API -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="surveyPanel">Restrict to Panel <span style="color: var(--color-text-tertiary); font-weight: 400;">(optional)</span></label>
+                    <select id="surveyPanel">
+                        <option value="">— Public survey (no panel restriction) —</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Target by Profile Attribute <span style="color: var(--color-text-tertiary); font-weight: 400;">(optional)</span></label>
+                    <small style="color:#9ca3af;display:block;margin-bottom:8px;">Only shows the survey to users whose profile attributes match. Every condition below must match (AND); within a condition, any toggled-on value counts (OR).</small>
+                    <div id="attributeConditions"></div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="addAttributeCondition()" style="margin-top:8px;">+ Add Condition</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="aiProvider">AI Provider <span style="color: var(--color-text-tertiary); font-weight: 400;">(optional)</span></label>
+                    <select id="aiProvider">
+                        <option value="">Default (Fallback: OpenAI → Gemini → Claude)</option>
+                        <option value="openai">OpenAI (gpt-4o)</option>
+                        <option value="gemini">Gemini 2.0 Flash</option>
+                        <option value="claude">Claude 3.5 Sonnet</option>
+                    </select>
+                    <small style="color: var(--color-text-secondary); display: block; margin-top: 4px;">Choose a specific AI model or use the automatic fallback chain</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-large" id="generateBtn">Generate Survey</button>
+            </form>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+                <div class="spinner"></div>
+                <p>Generating survey with AI...</p>
+            </div>
+
+            <!-- Response Section -->
+            <div id="responseSection" class="response-section" style="display: none;">
+                <div id="successMessage" class="message success" style="display: none;"></div>
+                <div id="errorMessage" class="message error" style="display: none;"></div>
+
+                <div id="surveyDetails" class="survey-details" style="display: none;">
+                    <h3>Survey Created Successfully! ✅</h3>
+
+                    <div id="surveyValidationBanner" class="validation-banner" style="display: none;"></div>
+
+                    <div class="detail-item">
+                        <label>Survey ID:</label>
+                        <div class="detail-value">
+                            <span id="surveyIdDisplay"></span>
+                            <button type="button" class="btn-copy" onclick="copySurveyId()">📋 Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="detail-item">
+                        <label>Questions Generated:</label>
+                        <span id="questionsCountDisplay">0</span>
+                    </div>
+
+                    <div class="detail-item">
+                        <label>Status:</label>
+                        <span class="status-badge">Draft (Manual Review Required)</span>
+                    </div>
+
+                    <div id="warningsSection" style="display: none;" class="warnings">
+                        <h4>⚠️ Validation Warnings:</h4>
+                        <ul id="warningsList"></ul>
+                    </div>
+
+                    <details class="structure-preview">
+                        <summary>📋 View Full Survey Structure</summary>
+                        <pre id="structurePreview"></pre>
+                    </details>
+
+                    <div class="button-group">
+                        <button type="button" class="btn btn-success" onclick="publishSurvey()">📢 Publish Survey</button>
+                        <button type="button" class="btn btn-warning" onclick="unpublishSurvey()">🔇 Unpublish</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()">Create Another</button>
+                        <button type="button" class="btn btn-primary" onclick="goToDashboard()">Go to Dashboard</button>
+                    </div>
+                </div>
+            </div>
+            </div>
+            <!-- Close surveyFormSection div -->
+
+            <!-- Surveys List Section -->
+            <!-- Surveys Section -->
+            <div id="surveysSection" style="display: none; grid-column: 2; display: flex; flex-direction: column; min-height: 100vh;">
+                <div class="content-header">
+                    <div>
+                        <h1>Surveys</h1>
+                        <p class="content-header-sub"><span id="surveysCountDisplay">0</span> surveys</p>
+                    </div>
+                    <div class="content-header-actions">
+                        <button type="button" class="btn btn-primary" onclick="showSurveyForm()">Create survey</button>
+                    </div>
+                </div>
+
+                <div class="content-body">
+                    <!-- Filter toolbar -->
+                    <div class="surveys-toolbar">
+                        <input type="search" id="surveysSearch" placeholder="Search surveys…" class="surveys-search-input">
+                        <div class="surveys-filters">
+                            <select id="surveysStatusFilter">
+                                <option value="">All statuses</option>
+                                <option value="published">Published</option>
+                                <option value="draft">Draft</option>
+                            </select>
+                            <button id="surveysClearFilters" class="btn btn-secondary btn-sm" style="display: none;">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Surveys table -->
+                    <div class="surveys-table-container">
+                        <table class="surveys-table">
+                            <thead>
+                                <tr>
+                                    <th>Survey Title</th>
+                                    <th>Questions</th>
+                                    <th>Status</th>
+                                    <th>Responses</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="surveysTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 20px; color: var(--color-text-tertiary);">
+                                        Loading surveys...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div id="noSurveysMessage" style="display: none; text-align: center; padding: 60px 20px;">
+                        <p style="color: var(--color-text-tertiary); font-size: 1em; margin-bottom: 16px;">No surveys yet</p>
+                        <button type="button" class="btn btn-primary" onclick="showSurveyForm()">Create your first survey</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Section -->
+            <div id="notificationsSection" style="display: none; padding: 20px;">
+                <h2>Send Notification</h2>
+
+                <div class="details-card" style="max-width: 600px; margin-bottom: 24px;">
+                    <h3>Compose & Send</h3>
+                    <div class="form-group">
+                        <label>Title *</label>
+                        <input type="text" id="notifTitle" class="form-control"
+                            placeholder="e.g. New Feature Alert!" maxlength="255" />
+                    </div>
+                    <div class="form-group">
+                        <label>Message *</label>
+                        <textarea id="notifBody" class="form-control"
+                            placeholder="Write your message here..." rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="notifType" class="form-control">
+                            <option value="announcement">📣 Announcement</option>
+                            <option value="survey_published">📋 Survey Published</option>
+                            <option value="reward_earned">🎁 Reward Earned</option>
+                        </select>
+                    </div>
+                    <div class="button-group" style="margin-top: 16px;">
+                        <button type="button" class="btn btn-primary" onclick="sendCustomNotification()">
+                            📤 Send to All Users
+                        </button>
+                    </div>
+                </div>
+
+                <div class="details-card">
+                    <h3>Recent Broadcasts</h3>
+                    <div id="recentNotifsList"><p style="color:#999;">Loading...</p></div>
+                </div>
+            </div>
+
+            <!-- Backfill Demographics Section -->
+            <div id="backfillDemographicsSection" style="display: none; padding: 20px;">
+                <h2>Backfill Respondent Demographics</h2>
+                <p style="color: #666; margin-bottom: 20px;">Calculate and backfill gender + age demographic data for surveys. You can backfill a single survey, dry-run to preview changes, or backfill all surveys at once.</p>
+
+                <!-- Mode Selection -->
+                <div class="details-card" style="margin-bottom: 20px;">
+                    <h3>Select Backfill Mode</h3>
+
+                    <!-- Single Survey Mode -->
+                    <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <h4 style="margin-top: 0; display: flex; align-items: center;">
+                            <input type="radio" name="backfillMode" value="single" onchange="updateBackfillUI()" checked>
+                            <span style="margin-left: 8px;">Single Survey</span>
+                        </h4>
+                        <p style="color: #666; font-size: 13px; margin: 8px 0 12px 0;">Backfill demographic data for one specific survey.</p>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label>Survey ID (UUID)</label>
+                            <input type="text" id="backfillSurveyId" class="form-control" placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" />
+                        </div>
+                        <div class="button-group" style="margin-top: 12px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="dryRunSingleSurvey()">👁️ Dry Run</button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="backfillSingleSurvey()">⚡ Execute</button>
+                        </div>
+                    </div>
+
+                    <!-- All Surveys Dry Run -->
+                    <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <h4 style="margin-top: 0; display: flex; align-items: center;">
+                            <input type="radio" name="backfillMode" value="dry-run-all" onchange="updateBackfillUI()">
+                            <span style="margin-left: 8px;">Dry Run All Surveys</span>
+                        </h4>
+                        <p style="color: #666; font-size: 13px; margin: 8px 0 12px 0;">Preview exactly what data would be inserted for all surveys without making any changes.</p>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="dryRunAllSurveys()">👁️ Preview Changes</button>
+                        </div>
+                    </div>
+
+                    <!-- All Surveys Backfill -->
+                    <div style="padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <h4 style="margin-top: 0; display: flex; align-items: center;">
+                            <input type="radio" name="backfillMode" value="backfill-all" onchange="updateBackfillUI()">
+                            <span style="margin-left: 8px;">Backfill All Surveys</span>
+                        </h4>
+                        <p style="color: #666; font-size: 13px; margin: 8px 0 12px 0;">Calculate and store demographic data for all surveys with completed responses. ⚠️ This will process all surveys.</p>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="backfillAllSurveys()" style="background-color: #ff9800;">⚡ Execute Backfill</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="backfillResultsSection" style="display: none; margin-top: 20px;">
+                    <div class="details-card">
+                        <h3>Results</h3>
+                        <div style="max-height: 600px; overflow-y: auto;">
+                            <div id="backfillResultsContent" style="font-size: 13px; font-family: monospace; background: #f5f5f5; padding: 12px; border-radius: 4px; white-space: pre-wrap; word-break: break-word;">
+                                Processing...
+                            </div>
+                        </div>
+                        <div class="button-group" style="margin-top: 12px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="hideBackfillResults()">✕ Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backfill Metrics Section -->
+            <div id="backfillMetricsSection" style="display: none; padding: 20px;">
+                <h2>Backfill Survey Metrics</h2>
+                <p style="color: #666; margin-bottom: 20px;">Recalculate Decision Time and Hesitation metrics using the latest formula definitions. You can backfill a single survey, dry-run to preview changes, or backfill all surveys at once.</p>
+
+                <!-- Mode Selection -->
+                <div class="details-card" style="margin-bottom: 20px;">
+                    <h3>Select Backfill Mode</h3>
+
+                    <!-- Single Survey Mode -->
+                    <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <h4 style="margin-top: 0; display: flex; align-items: center;">
+                            <input type="radio" name="backfillMetricsMode" value="single" onchange="updateBackfillMetricsUI()" checked>
+                            <span style="margin-left: 8px;">Single Survey</span>
+                        </h4>
+                        <p style="color: #666; font-size: 13px; margin: 8px 0 12px 0;">Recalculate metrics for one specific survey.</p>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label>Survey ID (UUID)</label>
+                            <input type="text" id="backfillMetricsSurveyId" class="form-control" placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000" />
+                        </div>
+                        <div class="button-group" style="margin-top: 12px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="dryRunMetricsSingleSurvey()">👁️ Dry Run</button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="backfillMetricsSingleSurvey()">⚡ Execute</button>
+                        </div>
+                    </div>
+
+                    <!-- All Surveys Dry Run -->
+                    <div style="margin-bottom: 20px; padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <h4 style="margin-top: 0; display: flex; align-items: center;">
+                            <input type="radio" name="backfillMetricsMode" value="dry-run-all" onchange="updateBackfillMetricsUI()">
+                            <span style="margin-left: 8px;">Dry Run All Surveys</span>
+                        </h4>
+                        <p style="color: #666; font-size: 13px; margin: 8px 0 12px 0;">Preview what metrics would be recalculated for all surveys without making any changes.</p>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="dryRunMetricsAllSurveys()">👁️ Preview Changes</button>
+                        </div>
+                    </div>
+
+                    <!-- All Surveys Backfill -->
+                    <div style="padding: 16px; border: 1px solid #e0e0e0; border-radius: 8px;">
+                        <h4 style="margin-top: 0; display: flex; align-items: center;">
+                            <input type="radio" name="backfillMetricsMode" value="backfill-all" onchange="updateBackfillMetricsUI()">
+                            <span style="margin-left: 8px;">Backfill All Surveys</span>
+                        </h4>
+                        <p style="color: #666; font-size: 13px; margin: 8px 0 12px 0;">Recalculate and store metrics for all surveys with completed responses. Uses updated Decision Time & Hesitation formulas. ⚠️ This will process all surveys.</p>
+                        <div class="button-group">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="backfillMetricsAllSurveys()" style="background-color: #ff9800;">⚡ Execute Backfill</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="backfillMetricsResultsSection" style="display: none; margin-top: 20px;">
+                    <div class="details-card">
+                        <h3>Results</h3>
+                        <div style="max-height: 600px; overflow-y: auto;">
+                            <div id="backfillMetricsResultsContent" style="font-size: 13px; font-family: monospace; background: #f5f5f5; padding: 12px; border-radius: 4px; white-space: pre-wrap; word-break: break-word;">
+                                Processing...
+                            </div>
+                        </div>
+                        <div class="button-group" style="margin-top: 12px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="hideBackfillMetricsResults()">✕ Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Survey Validator Section -->
+            <div id="validatorSection" style="display: none; padding: 20px;">
+                <div class="details-card">
+                    <h3>Survey JSON validator</h3>
+                    <p style="color: #666; font-size: 13px; margin: 8px 0 16px 0;">
+                        Paste a survey structure JSON below to check it for duplicate question IDs and other issues
+                        that would cause silent data loss when users submit responses. Read-only — does not modify any survey.
+                    </p>
+
+                    <div class="form-group">
+                        <label for="validatorJsonInput">Survey structure JSON</label>
+                        <textarea id="validatorJsonInput" rows="18" placeholder='Paste a survey structure here, e.g. {"test_type":"concept_test","title":"...","questions":[...]}' style="width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; resize: vertical;"></textarea>
+                    </div>
+
+                    <div class="button-group" style="margin-top: 12px;">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="runStandaloneValidation()">✓ Validate</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="clearValidatorInput()">Clear</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="loadValidatorSample()">Load sample (buggy)</button>
+                    </div>
+
+                    <div id="validatorBanner" class="validation-banner" style="display: none; margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <!-- Email Broadcast Section -->
+            <div id="emailBroadcastSection" style="display: none; padding: 20px;">
+                <h2>Email Broadcast</h2>
+                <p style="color: #666; margin-bottom: 20px;">Send a custom email to all active users. The email is sent in the background — you'll see results in the history table below.</p>
+
+                <div class="details-card" style="max-width: 700px; margin-bottom: 24px;">
+                    <h3>Compose Email</h3>
+                    <div class="form-group">
+                        <label>Subject *</label>
+                        <input type="text" id="broadcastSubject" class="form-control"
+                            placeholder="e.g. Exciting New Features in PopCue!" maxlength="500" />
+                    </div>
+                    <div class="form-group">
+                        <label>Recipients</label>
+                        <select id="broadcastFilter" class="form-control">
+                            <option value="verified">Verified users only (recommended)</option>
+                            <option value="all_active">All active users</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Message Body (HTML allowed) *</label>
+                        <textarea id="broadcastBody" class="form-control"
+                            placeholder="Write your message here. HTML is supported, e.g. &lt;b&gt;bold&lt;/b&gt;, &lt;a href=&quot;...&quot;&gt;links&lt;/a&gt;." rows="8"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Plain Text Fallback (optional)</label>
+                        <textarea id="broadcastBodyText" class="form-control"
+                            placeholder="Plain text version for email clients that don't support HTML..." rows="4"></textarea>
+                    </div>
+                    <div class="button-group" style="margin-top: 16px;">
+                        <button type="button" class="btn btn-primary" onclick="sendEmailBroadcast()">
+                            📧 Send Email Broadcast
+                        </button>
+                    </div>
+                </div>
+
+                <div class="details-card">
+                    <h3>Broadcast History</h3>
+                    <div id="emailBroadcastHistoryList"><p style="color:#999;">Loading...</p></div>
+                </div>
+            </div>
+
+            <!-- Panels Section -->
+            <div id="panelsSection" style="display: none; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>Panels Management</h2>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openCreatePanelModal()">+ Create Panel</button>
+                </div>
+
+                <div class="surveys-table-container">
+                    <table class="surveys-table">
+                        <thead>
+                            <tr>
+                                <th>Panel Name</th>
+                                <th>Panel Code</th>
+                                <th>Members</th>
+                                <th>Status</th>
+                                <th style="width: 200px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="panelsTableBody">
+                            <tr><td colspan="5" style="text-align: center; padding: 40px;">Loading panels...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Profile Attributes Section -->
+            <div id="profileAttributesSection" style="display: none; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h2 style="margin:0;">Profile Attributes</h2>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="loadProfileAttributesList()">🔄 Refresh</button>
+                </div>
+                <p style="color:#666; margin-bottom:20px; font-size:13px;">
+                    Attribute keys and the values respondents have actually submitted via profile questionnaires. Use these when targeting a survey to specific profile attributes on the "Create survey" page.
+                </p>
+                <div id="profileAttributesList">
+                    <p style="text-align:center; padding:40px; color:#999;">Loading profile attributes...</p>
+                </div>
+            </div>
+
+            <!-- Redemptions Section -->
+            <div id="redemptionsSection" style="display: none; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2 style="margin:0;">Redemptions</h2>
+                        <p style="margin:4px 0 0; color:#666; font-size:13px;"><span id="redemptionsCountDisplay">0</span> redemptions</p>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="loadRedemptionsList()">🔄 Refresh</button>
+                </div>
+
+                <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+                    <input type="search" id="redemptionsSearch" placeholder="Search by user name or email…" style="flex:1; min-width:220px; padding:8px 12px; border:1px solid var(--color-border-primary,#e5e7eb); border-radius:6px;">
+                    <select id="redemptionsStatusFilter" style="padding:8px 12px; border:1px solid var(--color-border-primary,#e5e7eb); border-radius:6px;">
+                        <option value="">All statuses</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="FAILED">Failed</option>
+                        <option value="CANCELED">Canceled</option>
+                    </select>
+                </div>
+
+                <div class="surveys-table-container">
+                    <table class="surveys-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Email</th>
+                                <th>Reward</th>
+                                <th>Value</th>
+                                <th>Points</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th style="width:90px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="redemptionsTableBody">
+                            <tr><td colspan="8" style="text-align:center; padding:40px;">Loading redemptions…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Profile Questionnaires Section -->
+            <div id="profileQuestionnairesSection" style="display: none; padding: 20px;">
+                <!-- LIST view -->
+                <div id="profileQuestionnaireListView">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h2 style="margin:0;">Profile questionnaires</h2>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="showProfileQuestionnaireForm()">+ Create profile questionnaire</button>
+                    </div>
+                    <p style="color:#666; margin-bottom:20px; font-size:13px;">
+                        Profile questionnaires populate user profile attributes (not survey analytics). Each question must have an
+                        <code>attribute_key</code> mapping to a key on <code>user_profiles.profile_attributes</code>.
+                    </p>
+                    <div class="surveys-table-container">
+                        <table class="surveys-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Questions</th>
+                                    <th>Status</th>
+                                    <th>Completions</th>
+                                    <th>Points</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profileQuestionnairesTableBody">
+                                <tr><td colspan="7" style="text-align:center; padding:40px; color:#999;">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- FORM view -->
+                <div id="profileQuestionnaireFormView" style="display:none; max-width:900px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h2 style="margin:0;">Create profile questionnaire</h2>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="closeProfileQuestionnaireForm()">← Back to list</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Title *</label>
+                        <input type="text" id="pqTitle" placeholder="e.g. Pantry & shopping habits" maxlength="500">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="pqDescription" placeholder="Optional. Shown to users on the survey card." rows="2" maxlength="2000"></textarea>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Points reward (0 = no points)</label>
+                            <input type="number" id="pqPoints" value="0" min="0" max="500">
+                        </div>
+                        <div class="form-group">
+                            <label>Tenant *</label>
+                            <select id="pqTenantId">
+                                <option value="">Select organization</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="checkbox" id="pqPublish" checked>
+                            Publish immediately (uncheck to save as draft)
+                        </label>
+                    </div>
+
+                    <div style="margin-top:24px; padding-top:16px; border-top:1px solid #e5e7eb;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <h3 style="margin:0;">Questions</h3>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="addProfileQuestionCard()">+ Add question</button>
+                        </div>
+                        <small id="pqExistingKeysHint" style="color:#666; display:block; margin-bottom:12px;"></small>
+                        <div id="pqQuestionCards"></div>
+                    </div>
+
+                    <div class="button-group" style="margin-top:24px;">
+                        <button type="button" class="btn btn-primary" onclick="submitProfileQuestionnaire()">Save profile questionnaire</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeProfileQuestionnaireForm()">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- DETAIL / REVIEW view -->
+                <div id="profileQuestionnaireDetailView" style="display:none; max-width:900px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="closeProfileQuestionnaireDetail()">← Back to list</button>
+                        <div style="display:flex; gap:8px;">
+                            <button type="button" id="pqDetailPublishBtn" class="btn btn-primary btn-sm" onclick="publishProfileQuestionnaire(window._pqDetailId)">Publish</button>
+                            <button type="button" id="pqDetailUnpublishBtn" class="btn btn-secondary btn-sm" style="color:#c62828;" onclick="unpublishProfileQuestionnaire(window._pqDetailId)">Unpublish</button>
+                            <button type="button" id="pqDetailNotifyRemainingBtn" class="btn btn-secondary btn-sm" onclick="alertRemainingProfileUsers(window._pqDetailId)">🔔 Alert remaining</button>
+                        </div>
+                    </div>
+
+                    <div style="background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:20px; margin-bottom:20px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                            <h2 id="pqDetailTitle" style="margin:0;"></h2>
+                            <span id="pqDetailStatusBadge" class="badge"></span>
+                        </div>
+                        <p id="pqDetailDescription" style="color:#666; margin:0 0 12px;"></p>
+                        <div style="display:flex; gap:24px; font-size:13px; color:#666;">
+                            <span>Points: <strong id="pqDetailPoints"></strong></span>
+                            <span>Questions: <strong id="pqDetailQCount"></strong></span>
+                            <span>Created: <strong id="pqDetailCreated"></strong></span>
+                        </div>
+                    </div>
+
+                    <h3 style="margin:0 0 12px;">Questions</h3>
+                    <div id="pqDetailQuestions"></div>
+                </div>
+            </div>
+
+            <!-- Survey Details Section -->
+            <div id="surveyDetailsSection" class="survey-details-section" style="display: none;">
+                <div class="details-header">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="backToSurveysList()">← Back to Surveys</button>
+                    <h2 id="detailsTitle">Survey Details</h2>
+                </div>
+
+                <div class="details-content">
+                    <div id="surveyValidationBannerDetail" class="validation-banner" style="display: none;"></div>
+
+                    <!-- Survey Metadata Card -->
+                    <div class="details-card">
+                        <div class="card-header">
+                            <h3 id="surveyTitleDetail">Survey Title</h3>
+                            <span id="surveyStatusBadge" class="status-badge"></span>
+                        </div>
+
+                        <div class="detail-row">
+                            <label>Description:</label>
+                            <p id="surveyDescriptionDetail">Loading...</p>
+                        </div>
+
+                        <div class="detail-row-grid">
+                            <div class="detail-item survey-id-item">
+                                <label>Survey ID:</label>
+                                <div class="detail-value">
+                                    <span id="surveyIdDetail"></span>
+                                    <button type="button" class="btn-copy" onclick="copySurveyIdDetail()">📋 Copy</button>
+                                </div>
+                            </div>
+
+                            <div class="detail-item">
+                                <label>Points Reward:</label>
+                                <span id="surveyPointsDetail">0</span>
+                            </div>
+
+                            <div class="detail-item">
+                                <label>Max Responses:</label>
+                                <span id="surveyMaxResponsesDetail">100</span>
+                            </div>
+
+                            <div class="detail-item">
+                                <label>Created:</label>
+                                <span id="surveyCreatedDetail">N/A</span>
+                            </div>
+
+                            <div class="detail-item">
+                                <label>Questions:</label>
+                                <span id="surveyQuestionsDetail">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Questions Preview Card -->
+                    <div class="details-card">
+                        <h3>Questions Preview</h3>
+                        <details class="questions-preview" open>
+                            <summary>📋 View All Questions</summary>
+                            <div id="questionsListDetail" class="questions-list">
+                                <p>Loading questions...</p>
+                            </div>
+                        </details>
+                    </div>
+
+                    <!-- Metrics Card -->
+                    <div id="metricsCard" class="details-card" style="display: none;">
+                        <div class="card-header">
+                            <h3>Survey Metrics</h3>
+                            <button class="btn btn-secondary btn-sm" onclick="loadSurveyMetrics(currentSurveyData.id)">Refresh</button>
+                        </div>
+
+                        <!-- Response Stats -->
+                        <div class="metrics-overview">
+                            <div class="metric-stat">
+                                <span class="metric-stat-value" id="metricCompletedSessions">0</span>
+                                <span class="metric-stat-label">Completed</span>
+                            </div>
+                            <div class="metric-stat">
+                                <span class="metric-stat-value" id="metricTotalResponses">0</span>
+                                <span class="metric-stat-label">Total Responses</span>
+                            </div>
+                            <div class="metric-stat">
+                                <span class="metric-stat-value" id="metricCompletionRate">0%</span>
+                                <span class="metric-stat-label">Completion Rate</span>
+                            </div>
+                        </div>
+
+                        <!-- Segment Picker -->
+                        <div id="segmentPickerBar" style="display: none; margin-bottom: 16px;">
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <label style="font-size: 13px; font-weight: 500; color: var(--color-text-secondary);">Segment by</label>
+                                <select id="segmentKeySelect" class="segment-key-select">
+                                    <option value="">— All Respondents —</option>
+                                </select>
+                                <button type="button" class="btn btn-secondary btn-sm" id="clearSegmentBtn"
+                                    onclick="clearSegmentation()" style="display: none;">Clear</button>
+                                <span id="segmentLoadingIndicator" style="display: none; font-size: 12px; color: var(--color-text-tertiary);">Loading segments...</span>
+                            </div>
+                        </div>
+
+                        <!-- Segmented Comparison View (replaces KPI grid when a segment is active) -->
+                        <div id="segmentComparisonView" style="display: none;"></div>
+
+                        <!-- Concept Comparison, KPIs, Pick Rates -->
+                        <div id="kpiMetrics" class="kpi-grid">
+                            <p class="no-data">No metrics data yet</p>
+                        </div>
+
+                        <!-- Per-Question Analytics -->
+                        <div id="questionAnalyticsSection" class="metrics-section" style="display: none;">
+                        </div>
+                    </div>
+
+                    <!-- Data Quality Card -->
+                    <div id="dataQualityCard" class="details-card" style="display: none;">
+                        <div class="card-header">
+                            <h3>🛡️ Data quality</h3>
+                            <label style="display:inline-flex; align-items:center; gap:6px; font-size:13px; color:#374151; cursor:pointer;">
+                                <input type="checkbox" id="dqExcludeToggle" onchange="onExcludeToggle()"> Exclude low-quality from KPIs
+                            </label>
+                        </div>
+                        <div id="dqExcludeNote" style="display:none; font-size:12px; color:#6b7280; margin:4px 0 12px;"></div>
+                        <div id="dqSummary"></div>
+                        <div style="margin-top:14px;">
+                            <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                                <thead><tr style="color:#9ca3af; font-size:11px; text-align:left;">
+                                    <th style="padding:8px;">Respondent</th>
+                                    <th style="text-align:center;">Score</th>
+                                    <th>Flags</th>
+                                    <th style="text-align:right; padding-right:8px;">Status</th>
+                                </tr></thead>
+                                <tbody id="dqRespondentsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Pipeline Card -->
+                    <div id="analyticsCard" class="details-card" style="display: none;">
+                        <div class="card-header">
+                            <h3>🧪 Analytics Pipeline</h3>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary btn-sm" id="analyticsRefreshBtn"
+                                    onclick="refreshAnalyticsStatus()" style="display: none;">Refresh</button>
+                                <button class="btn btn-primary btn-sm" id="downloadAnalyticsPdfBtn"
+                                    onclick="downloadAnalyticsPdf()" style="display: none; background: linear-gradient(135deg, #dc2626, #b91c1c); color: white;">📄 Download PDF</button>
+                            </div>
+                        </div>
+                        <div id="analyticsContent">
+                            <p class="no-data">No analytics run yet. Click "🧪 Run Analytics" to start.</p>
+                        </div>
+                        <!-- Pipeline Step Progress -->
+                        <div id="pipelineSteps" style="display: none;"></div>
+                        <!-- Analytics Results -->
+                        <div id="analyticsResults" style="display: none; margin-top: 16px;">
+                            <h4 style="margin-bottom: 8px;">Pipeline Output</h4>
+                            <div id="analyticsResultsContent"
+                                style="font-size: 13px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                                       background: #1e293b; color: #e2e8f0; padding: 16px; border-radius: 6px; max-height: 400px;
+                                       overflow-y: auto; white-space: pre-wrap; word-break: break-word; line-height: 1.6;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions Card -->
+                    <div class="details-card actions-card">
+                        <h3>Actions</h3>
+                        <div class="button-group">
+                            <button
+                                id="downloadReportBtn"
+                                type="button"
+                                class="btn btn-primary"
+                                onclick="downloadSurveyReport()"
+                                style="display: none;">
+                                📊 Download Report (PDF)
+                            </button>
+                            <button
+                                id="downloadMetricsBtn"
+                                type="button"
+                                class="btn btn-primary"
+                                onclick="downloadMetricsJSON()"
+                                style="display: none;">
+                                📥 Download Metrics (JSON)
+                            </button>
+                            <button
+                                id="runAnalyticsBtn"
+                                type="button"
+                                class="btn btn-primary"
+                                onclick="showAnalyticsModal()"
+                                style="display: none;">
+                                🧪 Run Analytics
+                            </button>
+                            <button
+                                id="publishDetailBtn"
+                                type="button"
+                                class="btn btn-success"
+                                onclick="publishSurveyFromDetail()"
+                                style="display: none;">
+                                📢 Publish Survey
+                            </button>
+                            <button
+                                id="unpublishDetailBtn"
+                                type="button"
+                                class="btn btn-warning"
+                                onclick="unpublishSurveyFromDetail()"
+                                style="display: none;">
+                                🔇 Unpublish Survey
+                            </button>
+                            <button
+                                id="notifyRemainingBtn"
+                                type="button"
+                                class="btn btn-secondary"
+                                onclick="notifyRemainingFromDetail()"
+                                style="display: none;">
+                                🔔 Notify Remaining Participants
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Spinner for Report Download -->
+                <div id="reportLoadingSpinner" class="report-loading-overlay" style="display: none;">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                        <p>Generating PDF report... This may take a few seconds.</p>
+                    </div>
+                </div>
+            </div>
+            </div>
+            <div id="userQualitySection" style="display: none; padding: 20px;">
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                    <input type="search" id="uqSearch" placeholder="Search user, email…" style="flex:1; min-width:200px; max-width:320px; padding:7px 10px; border:1px solid #e5e7eb; border-radius:6px; font-size:13px;">
+                    <select id="uqTierFilter" style="padding:7px 10px; border:1px solid #e5e7eb; border-radius:6px; font-size:13px;">
+                        <option value="">All tiers</option>
+                        <option value="flagged">Flagged</option>
+                        <option value="watch">Watch</option>
+                        <option value="trusted">Trusted</option>
+                    </select>
+                    <select id="uqSort" style="padding:7px 10px; border:1px solid #e5e7eb; border-radius:6px; font-size:13px;">
+                        <option value="exclude_rate">Sort: exclude rate</option>
+                        <option value="mean_score">Sort: mean score</option>
+                        <option value="surveys">Sort: surveys taken</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="loadUserQuality()">🔄 Refresh</button>
+                </div>
+                <div id="uqMacro"></div>
+                <div style="background:#fff; border:0.5px solid #e5e7eb; border-radius:12px; padding:8px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+                        <thead><tr style="color:#9ca3af; font-size:11px; text-align:left;">
+                            <th style="padding:8px;">User</th>
+                            <th style="text-align:center;">Surveys</th>
+                            <th style="text-align:center;">Exclude rate</th>
+                            <th style="text-align:center;">Mean</th>
+                            <th style="text-align:center;">Excluded</th>
+                            <th style="text-align:right; padding-right:8px;">Tier</th>
+                        </tr></thead>
+                        <tbody id="uqUsersBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="uqModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; align-items:center; justify-content:center;" onclick="if(event.target===this)closeUserQualityDetail()">
+                <div style="background:#fff; border-radius:12px; max-width:640px; width:92%; max-height:85vh; overflow:auto; padding:20px;">
+                    <div id="uqModalBody"></div>
+                </div>
+            </div>
+            <!-- Close mainPanel / content-body -->
+        </main>
+    </div>
+    <!-- Close #app -->
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+
+
+    <script>
+    // ss: show/hide concept builder based on survey type
+let conceptCounter = 0;
+
+function onSurveyTypeChange() {
+    const surveyType = document.getElementById('surveyType').value;
+    const section = document.getElementById('conceptBuilderSection');
+    const needsConcepts = surveyType === 'packaging_design' || surveyType === 'concept_test';
+    section.style.display = needsConcepts ? 'block' : 'none';
+
+    // Auto-add 2 cards if empty
+    if (needsConcepts && document.getElementById('conceptCards').children.length === 0) {
+        addConceptCard();
+        addConceptCard();
+    }
+}
+
+function addConceptCard() {
+    conceptCounter++;
+    const id = conceptCounter;
+    const cards = document.getElementById('conceptCards');
+    const card = document.createElement('div');
+    card.className = 'concept-card';
+    card.id = `concept-card-${id}`;
+    card.style.cssText = 'border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;background:#f9fafb;';
+    card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong>Concept ${cards.children.length + 1}</strong>
+            <button type="button" onclick="removeConceptCard(${id})" style="background:none;border:none;cursor:pointer;color:#e74c3c;font-size:1.1em;">✕</button>
+        </div>
+        <div style="margin-bottom:8px;">
+            <label style="font-size:0.85rem;">Label *</label>
+            <input type="text" id="concept-label-${id}" placeholder="e.g. Tortilla Chips" style="margin-top:4px;width:100%;box-sizing:border-box;">
+        </div>
+        <div style="margin-bottom:8px;">
+            <label style="font-size:0.85rem;">Upload Image *</label>
+            <div style="display:flex;gap:8px;margin-top:4px;">
+                <input type="file" id="concept-file-${id}" accept="image/*" style="flex:1;font-size:0.85rem;">
+                <button type="button" id="concept-upload-btn-${id}" class="btn btn-sm" style="padding:6px 12px;background:#3b82f6;color:white;border:none;border-radius:4px;cursor:pointer;font-size:0.85rem;" onclick="uploadConceptImage(${id})">Upload</button>
+            </div>
+            <small id="concept-upload-status-${id}" style="color:#666;display:block;margin-top:4px;"></small>
+        </div>
+        <input type="hidden" id="concept-imageurl-${id}">
+        <img id="concept-preview-${id}" src="" alt="Preview" style="display:none;max-width:120px;max-height:120px;border-radius:6px;margin-top:6px;object-fit:cover;">
+    `;
+    cards.appendChild(card);
+}
+
+function removeConceptCard(id) {
+    const cards = document.getElementById('conceptCards');
+    if (cards.children.length <= 2) { showToast('At least 2 concepts required', 'error'); return; }
+    document.getElementById(`concept-card-${id}`)?.remove();
+}
+
+function onConceptUrlInput(id) {
+    const url = document.getElementById(`concept-imageurl-${id}`)?.value?.trim();
+    const preview = document.getElementById(`concept-preview-${id}`);
+    if (!preview) return;
+    if (url && url.startsWith('http')) {
+        preview.src = url;
+        preview.style.display = 'block';
+        preview.onerror = () => { preview.style.display = 'none'; };
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+async function uploadConceptImage(id) {
+    const fileInput = document.getElementById(`concept-file-${id}`);
+    const file = fileInput?.files[0];
+    if (!file) {
+        showToast('Please select an image file', 'error');
+        return;
+    }
+
+    const uploadBtn = document.getElementById(`concept-upload-btn-${id}`);
+    const statusEl = document.getElementById(`concept-upload-status-${id}`);
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = 'Uploading...';
+    statusEl.textContent = 'Uploading...';
+    statusEl.style.color = '#666';
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/upload/image`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Upload failed');
+        }
+
+        const data = await response.json();
+        const imageUrl = data.url;
+
+        // Store URL in hidden field (read by getConceptsFromForm())
+        document.getElementById(`concept-imageurl-${id}`).value = imageUrl;
+
+        // Show preview
+        const preview = document.getElementById(`concept-preview-${id}`);
+        preview.src = imageUrl;
+        preview.style.display = 'block';
+        preview.onerror = () => {
+            statusEl.textContent = 'Preview load failed';
+            statusEl.style.color = '#e74c3c';
+        };
+
+        uploadBtn.textContent = '✓ Uploaded';
+        statusEl.textContent = 'Image uploaded successfully!';
+        statusEl.style.color = '#10b981';
+        showToast('Image uploaded!', 'success');
+    } catch (error) {
+        showToast(`Upload failed: ${error.message}`, 'error');
+        statusEl.textContent = `Error: ${error.message}`;
+        statusEl.style.color = '#e74c3c';
+        uploadBtn.textContent = 'Upload';
+        uploadBtn.disabled = false;
+    }
+}
+    </script>
+
+    <!-- Panel QR Code Modal -->
+    <div id="panelQRModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="text-align: center; min-width: 360px; max-width: 420px;">
+            <h3 id="panelQRTitle" style="margin-bottom: 4px;">Panel QR Code</h3>
+            <p id="panelQRSubtitle" style="color: #666; font-size: 13px; margin: 0 0 20px 0;">Scan to join panel</p>
+            <div id="panelQRCanvas" style="display: flex; justify-content: center; margin-bottom: 16px; background: #fff; border-radius: 8px; padding: 16px; border: 1px solid #e5e7eb;"></div>
+            <div style="margin-bottom: 20px;">
+                <span class="panel-code-badge" id="panelQRCode" style="justify-content: center; font-size: 1.3em;"></span>
+            </div>
+            <p style="font-size: 11px; color: #999; margin: 0 0 20px 0;">QR contains the plain panel code. Users can scan this with the PopCue app.</p>
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closePanelQRModal()">Close</button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="copyPanelCode()" id="panelQRCopyBtn">📋 Copy Code</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="downloadPanelQR()">⬇ Download PNG</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Modal Overlay -->
+    <div id="panelModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 id="panelModalTitle">Create Panel</h3>
+            <form id="panelForm">
+                <div class="form-group">
+                    <label>Panel Name</label>
+                    <input type="text" id="panelName" required maxlength="255" placeholder="e.g., Tech Enthusiasts, Q2 Cohort">
+                </div>
+                <div class="form-group">
+                    <label>Description (optional)</label>
+                    <textarea id="panelDescription" rows="3" maxlength="2000" placeholder="Describe the purpose of this panel..."></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="closePanelModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm" id="panelModalSubmitBtn">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Redemption Detail Modal -->
+    <div id="redemptionDetailModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="min-width:480px; max-width:760px; width:92%; max-height:88vh; overflow-y:auto; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px;">
+                <h3 id="redemptionDetailTitle" style="margin:0;">Redemption details</h3>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeRedemptionDetailModal()">Close</button>
+            </div>
+
+            <!-- User -->
+            <div style="margin-top:16px; padding:14px; background:var(--color-background-secondary,#f8fafc); border:1px solid var(--color-border-primary,#e5e7eb); border-radius:8px;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:#888; margin-bottom:8px;">User</div>
+                <div id="redemptionUserName" style="font-weight:600; font-size:15px;">—</div>
+                <div id="redemptionUserEmail" style="color:#666; font-size:13px;">—</div>
+                <div style="margin-top:6px; font-size:13px;">Current balance: <strong id="redemptionUserBalance">—</strong> pts</div>
+            </div>
+
+            <!-- Redemption -->
+            <div style="margin-top:14px;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:#888; margin-bottom:8px;">Redemption</div>
+                <div id="redemptionDetailBody" style="display:grid; grid-template-columns:1fr 1fr; gap:10px 20px; font-size:13px;"></div>
+                <div style="margin-top:12px;">
+                    <button type="button" class="btn btn-primary btn-sm" id="redemptionRefreshBtn" onclick="refreshRedemptionStatus()">🔄 Refresh status</button>
+                </div>
+            </div>
+
+            <!-- Ledger -->
+            <div style="margin-top:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;">
+                    <div style="font-size:11px; text-transform:uppercase; letter-spacing:.4px; color:#888;">Reward ledger history</div>
+                    <div id="redemptionLedgerSummary" style="font-size:12px; color:#666;"></div>
+                </div>
+                <div class="surveys-table-container" style="max-height:320px; overflow-y:auto;">
+                    <table class="surveys-table">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Detail</th>
+                                <th style="text-align:right;">Points</th>
+                                <th style="text-align:right;">Balance</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="redemptionLedgerBody">
+                            <tr><td colspan="5" style="text-align:center; padding:24px;">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Weights Modal -->
+    <div id="analyticsWeightsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 440px;">
+            <h3 style="margin-bottom: 4px;">Configure Analytics Pipeline</h3>
+            <p style="color: #666; font-size: 13px; margin: 0 0 20px 0;">
+                Configure executive summary pillar weights and EI collection duration before running the pipeline.
+            </p>
+
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #f9fafb;">
+                <h4 style="margin: 0 0 12px 0; font-size: 14px;">Exec Summary Weights</h4>
+                <p style="color: #888; font-size: 12px; margin: 0 0 12px 0;">Must sum to 1.0</p>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label style="font-size: 13px;">Commercial Strength (cs)</label>
+                    <input type="number" id="weightCs" value="0.6" min="0" max="1" step="0.05" class="form-control" style="max-width: 120px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label style="font-size: 13px;">Brand Quality (bq)</label>
+                    <input type="number" id="weightBq" value="0.2" min="0" max="1" step="0.05" class="form-control" style="max-width: 120px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label style="font-size: 13px;">Perceptual Quality (pq)</label>
+                    <input type="number" id="weightPq" value="0.2" min="0" max="1" step="0.05" class="form-control" style="max-width: 120px;">
+                </div>
+            </div>
+
+            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 16px; background: #f9fafb;">
+                <h4 style="margin: 0 0 12px 0; font-size: 14px;">EI Collection</h4>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 13px;">Collection Duration (minutes)</label>
+                    <input type="number" id="eiDuration" value="15" min="1" max="60" class="form-control" style="max-width: 120px;">
+                </div>
+            </div>
+
+            <p id="weightsValidation" style="color: #e74c3c; font-size: 12px; display: none; margin-bottom: 12px;"></p>
+
+            <div class="button-group" style="margin-top: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeAnalyticsModal()">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" id="startPipelineBtn" onclick="startAnalyticsPipeline()">🚀 Start Pipeline</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="panels.js"></script>
+    <script src="profile_questionnaire.js"></script>
+    <script src="profile_attributes.js"></script>
+    <script src="redemptions.js"></script>
+    <script src="user_quality.js"></script>
+    <script src="survey_quality.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

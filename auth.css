@@ -1,0 +1,87 @@
+/* ═══════════════════════════════════════════════════════
+   AUTH SCREEN
+   Full-screen login overlay shown before the app shell.
+   ═══════════════════════════════════════════════════════ */
+
+#authSection {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-background-tertiary);
+    z-index: 200;
+}
+
+.auth-section {
+    width: 100%;
+    max-width: 380px;
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 36px 32px;
+    box-shadow: var(--shadow-md);
+}
+
+.auth-section-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.auth-section-logo-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--color-brand);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-section-logo-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.auth-section h2 {
+    margin-bottom: 6px;
+    font-size: 1.25em;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-align: left;
+}
+
+.auth-section-subtitle {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    margin-bottom: 24px;
+}
+
+.auth-env-toggle {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+}
+
+.auth-env-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.auth-hint {
+    text-align: center;
+    font-size: 0.85em;
+    color: var(--color-text-tertiary);
+    margin-top: 15px;
+}
