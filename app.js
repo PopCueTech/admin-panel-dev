@@ -2,13 +2,15 @@
 // CONFIGURATION
 // ═════════════════════════════════════════════════════════
 
-// Replaced at deploy time by the deploy-admin-{prod,dev}.yml workflow.
-const API_BASE_URL = 'https://popcue-api-812411253957.us-central1.run.app';
+const API_URL_PROD = 'https://popcue-api-prod-g7mtgi7cwa-uc.a.run.app';
+const API_URL_DEV = 'https://popcue-api-812411253957.us-central1.run.app';
 const TOKEN_KEY = 'popcue_admin_token';
 const REFRESH_TOKEN_KEY = 'popcue_admin_refresh_token';
 const USER_KEY = 'popcue_admin_user';
 const TENANT_ID_KEY = 'popcue_admin_tenant_id';
+const ENV_KEY = 'popcue_admin_env';
 
+let API_BASE_URL = API_URL_PROD;
 let currentUser = null;
 let currentToken = null;
 let currentSurveyData = null;
@@ -169,6 +171,10 @@ async function checkExistingAnalyticsState(surveyId) {
 // ═════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Load saved environment
+    const savedEnv = localStorage.getItem(ENV_KEY) || 'prod';
+    applyEnvironment(savedEnv);
+
     // Check if user is already logged in
     const savedToken = localStorage.getItem(TOKEN_KEY);
     const savedUser = localStorage.getItem(USER_KEY);
@@ -241,6 +247,73 @@ function showSurveysList() {
 
     // Scroll to top
     window.scrollTo(0, 0);
+}
+
+// ═════════════════════════════════════════════════════════
+// GLP-1 SURVEY CREATION
+// ═════════════════════════════════════════════════════════
+
+function openGLP1SurveyModal() {
+    const modal = document.getElementById('glp1SurveyModal');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeGLP1SurveyModal() {
+    const modal = document.getElementById('glp1SurveyModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function submitGLP1SurveyCreation() {
+    const titleInput = document.getElementById('glp1Title');
+    const pointsInput = document.getElementById('glp1Points');
+    const maxResponsesInput = document.getElementById('glp1MaxResponses');
+
+    const title = titleInput ? titleInput.value.trim() : 'GLP-1 Phase 1 Consumer Research Survey';
+    const points = parseInt(pointsInput ? pointsInput.value : '50') || 50;
+    const maxResponses = parseInt(maxResponsesInput ? maxResponsesInput.value : '500') || 500;
+
+    if (!title) {
+        showToast('Please enter a survey title', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('createGlp1Btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Creating...';
+    }
+
+    try {
+        const payload = {
+            title,
+            points,
+            max_responses: maxResponses
+        };
+
+        const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/surveys/create-glp1`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || 'Failed to create GLP-1 survey');
+        }
+
+        const data = await response.json();
+        showToast(`✅ GLP-1 survey created with ${data.questions_count} questions!`, 'success');
+        closeGLP1SurveyModal();
+        showSurveysList();
+    } catch (e) {
+        console.error('Error creating GLP-1 survey:', e);
+        showToast(e.message || 'Error creating GLP-1 survey', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = '🚀 Create Survey';
+        }
+    }
 }
 
 // ═════════════════════════════════════════════════════════
@@ -994,6 +1067,99 @@ async function fetchWithAuth(url, options = {}) {
 }
 
 // ═════════════════════════════════════════════════════════
+// CUSTOM QUESTIONS UPLOAD HANDLERS
+// ═════════════════════════════════════════════════════════
+
+let uploadedCustomQuestionsPayload = null;
+
+function handleCustomQuestionsUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const parsed = JSON.parse(e.target.result);
+            let categories = [];
+            if (parsed.categories && Array.isArray(parsed.categories)) {
+                categories = parsed.categories;
+            } else if (Array.isArray(parsed)) {
+                categories = [{ name: "General Custom Questions", questions: parsed }];
+            } else if (parsed.questions && Array.isArray(parsed.questions)) {
+                categories = [{ name: "General Custom Questions", questions: parsed.questions }];
+            } else {
+                throw new Error('JSON format invalid. Expected { "categories": [ { "name": "...", "questions": [...] } ] }');
+            }
+
+            let totalQuestions = 0;
+            const validCategories = categories.map((cat, cIdx) => {
+                const catName = cat.name || `Category ${cIdx + 1}`;
+                const questions = (cat.questions || []).map((q, qIdx) => {
+                    if (!q.title || !q.type) {
+                        throw new Error(`Question ${qIdx + 1} in category "${catName}" missing title or type.`);
+                    }
+                    totalQuestions++;
+                    return {
+                        id: q.id || `cq_${cIdx + 1}_${qIdx + 1}`,
+                        type: q.type,
+                        title: q.title,
+                        description: q.description || null,
+                        required: q.required !== false,
+                        data: q.data || {}
+                    };
+                });
+                return { name: catName, questions };
+            });
+
+            if (totalQuestions === 0) {
+                throw new Error('JSON file contains no custom questions.');
+            }
+
+            uploadedCustomQuestionsPayload = { categories: validCategories };
+            document.getElementById('customQuestionsFileName').textContent = `${file.name} (${totalQuestions} question${totalQuestions > 1 ? 's' : ''})`;
+            document.getElementById('clearCustomQuestionsBtn').style.display = 'inline-block';
+            renderCustomQuestionsPreview(validCategories);
+            showToast(`Loaded ${totalQuestions} custom question(s) successfully!`, 'success');
+        } catch (err) {
+            clearCustomQuestionsUpload();
+            showToast(`Invalid custom questions file: ${err.message}`, 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+function clearCustomQuestionsUpload() {
+    uploadedCustomQuestionsPayload = null;
+    document.getElementById('customQuestionsFile').value = '';
+    document.getElementById('customQuestionsFileName').textContent = 'No file selected';
+    document.getElementById('clearCustomQuestionsBtn').style.display = 'none';
+    document.getElementById('customQuestionsPreview').style.display = 'none';
+    document.getElementById('customQuestionsCategoriesList').innerHTML = '';
+}
+
+function renderCustomQuestionsPreview(categories) {
+    const previewEl = document.getElementById('customQuestionsPreview');
+    const container = document.getElementById('customQuestionsCategoriesList');
+    container.innerHTML = '';
+
+    categories.forEach(cat => {
+        const catDiv = document.createElement('div');
+        catDiv.style.marginBottom = '8px';
+        catDiv.innerHTML = `
+            <div style="font-weight: 600; font-size: 13px; color: var(--color-accent, #6366f1); margin-bottom: 4px;">
+                📁 ${cat.name} (${cat.questions.length})
+            </div>
+            <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: var(--color-text-secondary);">
+                ${cat.questions.map(q => `<li><strong>[${q.type}]</strong> ${q.title}</li>`).join('')}
+            </ul>
+        `;
+        container.appendChild(catDiv);
+    });
+
+    previewEl.style.display = 'block';
+}
+
+// ═════════════════════════════════════════════════════════
 // SURVEY GENERATION
 // ═════════════════════════════════════════════════════════
 
@@ -1038,7 +1204,8 @@ async function generateSurvey() {
                 concepts: getConceptsFromForm(),  // ss: send concepts with image URLs
                 panel_id: panelId,
                 ai_provider: aiProvider,
-                target_attributes: targetAttributes
+                target_attributes: targetAttributes,
+                custom_questions: uploadedCustomQuestionsPayload
             })
         });
 
@@ -1417,6 +1584,7 @@ function resetForm() {
     document.getElementById('nameCount').textContent = '0/500';
     document.getElementById('descCount').textContent = '0/2000';
     document.getElementById('contextCount').textContent = '0/50000';
+    clearCustomQuestionsUpload();
 }
 
 function copySurveyId() {

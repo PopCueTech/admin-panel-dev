@@ -1,9 +1,10 @@
 // ═════════════════════════════════════════════════════════
 // AUTHENTICATION
-// login, logout, session restore
+// login, logout, session restore, env switching
 // Depends on globals defined in app.js:
 //   API_BASE_URL, TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY,
-//   TENANT_ID_KEY, currentToken, currentUser
+//   TENANT_ID_KEY, ENV_KEY, API_URL_PROD, API_URL_DEV,
+//   currentToken, currentUser
 // ═════════════════════════════════════════════════════════
 
 async function login() {
@@ -93,6 +94,54 @@ function showMainPanel() {
         item.addEventListener('click', () => sectionMap[item.dataset.section]?.());
     });
 
+    // Wire up sidebar env toggle (auth screen toggle uses inline onclick)
+    document.querySelectorAll('#sidebar .env-btn[data-env]').forEach(btn => {
+        btn.addEventListener('click', () => switchEnvironment(btn.dataset.env));
+    });
+
     loadTenants();
     showDashboard();
+}
+
+// ═════════════════════════════════════════════════════════
+// ENVIRONMENT SWITCHER
+// ═════════════════════════════════════════════════════════
+
+function applyEnvironment(env) {
+    API_BASE_URL = env === 'dev' ? API_URL_DEV : API_URL_PROD;
+
+    document.querySelectorAll('.env-btn[data-env]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.env === env);
+    });
+}
+
+function switchEnvironment(env) {
+    const currentEnv = localStorage.getItem(ENV_KEY) || 'prod';
+    if (env === currentEnv) return;
+
+    const envName = env === 'dev' ? 'DEVELOPMENT' : 'PRODUCTION';
+    if (!confirm(`Switch to ${envName} environment? You will be logged out.`)) return;
+
+    stopRefreshTimer();
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(TENANT_ID_KEY);
+    currentToken = null;
+    currentUser = null;
+
+    localStorage.setItem(ENV_KEY, env);
+    applyEnvironment(env);
+
+    const surveyForm = document.getElementById('surveyForm');
+    if (surveyForm) surveyForm.reset();
+    const responseSection = document.getElementById('responseSection');
+    if (responseSection) responseSection.style.display = 'none';
+
+    document.getElementById('authSection').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('authEmail').value = '';
+    document.getElementById('authPassword').value = '';
+
+    showToast(`Switched to ${envName}`, 'success');
 }

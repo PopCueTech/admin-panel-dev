@@ -29,6 +29,13 @@
             </div>
             <button id="loginBtn" class="btn btn-primary" onclick="login()" style="width: 100%; margin-top: 4px;">Sign in</button>
             <p class="auth-hint" style="margin-top: 16px;">Use your PopCue account credentials</p>
+            <div class="auth-env-toggle">
+                <span class="auth-env-label">Environment</span>
+                <div class="env-toggle">
+                    <button class="env-btn active" data-env="prod" onclick="switchEnvironment('prod')">Production</button>
+                    <button class="env-btn" data-env="dev" onclick="switchEnvironment('dev')">Dev</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -40,6 +47,12 @@
             <div class="sidebar-header">
                 <div class="sidebar-logo">PC</div>
                 <span class="sidebar-title">PopCue</span>
+            </div>
+            <div class="sidebar-env">
+                <div class="env-toggle">
+                    <button class="env-btn active" data-env="prod">Production</button>
+                    <button class="env-btn" data-env="dev">Dev</button>
+                </div>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-group">
@@ -396,6 +409,22 @@
                     <small style="color: var(--color-text-secondary); display: block; margin-top: 4px;">Choose a specific AI model or use the automatic fallback chain</small>
                 </div>
 
+                <!-- Custom Questions Upload (Categorized JSON) -->
+                <div class="form-group">
+                    <label for="customQuestionsFile">Custom Questions (JSON Upload) <span style="color: var(--color-text-tertiary); font-weight: 400;">(optional)</span></label>
+                    <small style="color: var(--color-text-secondary); display: block; margin-bottom: 8px;">Upload a JSON file containing custom questions categorized into general topics (e.g. Brand Perception, Sustainability).</small>
+                    <div class="custom-questions-dropzone" id="customQuestionsDropzone" style="display: flex; align-items: center;">
+                        <input type="file" id="customQuestionsFile" accept=".json" onchange="handleCustomQuestionsUpload(event)" style="display: none;">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('customQuestionsFile').click()">📁 Choose JSON File</button>
+                        <span id="customQuestionsFileName" style="margin-left: 10px; color: var(--color-text-secondary); font-size: 13px;">No file selected</span>
+                        <button type="button" id="clearCustomQuestionsBtn" class="btn btn-secondary btn-sm" onclick="clearCustomQuestionsUpload()" style="display: none; margin-left: 10px;">Remove</button>
+                    </div>
+                    <div id="customQuestionsPreview" style="display: none; margin-top: 12px; padding: 12px; background: var(--color-surface-secondary, rgba(255, 255, 255, 0.05)); border: 1px solid var(--color-border, #333); border-radius: 8px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 14px; color: var(--color-text-primary);" id="customQuestionsPreviewHeader">Parsed Custom Questions</h4>
+                        <div id="customQuestionsCategoriesList"></div>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary btn-large" id="generateBtn">Generate Survey</button>
             </form>
 
@@ -463,6 +492,7 @@
                         <p class="content-header-sub"><span id="surveysCountDisplay">0</span> surveys</p>
                     </div>
                     <div class="content-header-actions">
+                        <button type="button" class="btn btn-secondary" onclick="openGLP1SurveyModal()" style="margin-right: 8px;">🧪 Create GLP-1 Survey</button>
                         <button type="button" class="btn btn-primary" onclick="showSurveyForm()">Create survey</button>
                     </div>
                 </div>
@@ -1474,6 +1504,36 @@ async function uploadConceptImage(id) {
         </div>
     </div>
 
+    <!-- GLP-1 Survey Modal -->
+    <div id="glp1SurveyModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 460px;">
+            <h3 style="margin-bottom: 4px;">🧪 Create GLP-1 Phase 1 Survey</h3>
+            <p style="color: #666; font-size: 13px; margin: 0 0 20px 0;">
+                Generate the 75-question GLP-1 Phase 1 research study survey directly from the instrument template.
+            </p>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label style="font-size: 13px; font-weight: 600;">Survey Title</label>
+                <input type="text" id="glp1Title" value="GLP-1 Phase 1 Consumer Research Survey" class="form-control">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 14px;">
+                <label style="font-size: 13px; font-weight: 600;">Points</label>
+                <input type="number" id="glp1Points" value="50" min="0" max="500" class="form-control" style="max-width: 140px;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-size: 13px; font-weight: 600;">Max Completed Responses</label>
+                <input type="number" id="glp1MaxResponses" value="500" min="1" max="10000" class="form-control" style="max-width: 140px;">
+            </div>
+
+            <div class="button-group" style="margin-top: 16px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeGLP1SurveyModal()">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" id="createGlp1Btn" onclick="submitGLP1SurveyCreation()">🚀 Create Survey</button>
+            </div>
+        </div>
+    </div>
+
     <script src="auth.js"></script>
     <script src="panels.js"></script>
     <script src="profile_questionnaire.js"></script>
@@ -1484,3 +1544,5 @@ async function uploadConceptImage(id) {
     <script src="app.js"></script>
 </body>
 </html>
+
+<!-- sync test: 2026-08-04T19:30:45Z -->
