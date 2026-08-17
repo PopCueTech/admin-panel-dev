@@ -1504,15 +1504,43 @@ async function uploadConceptImage(id) {
         </div>
     </div>
 
-    <!-- GLP-1 Survey Modal -->
+    <!-- GLP-1 Survey Upload Modal -->
     <div id="glp1SurveyModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content" style="max-width: 460px;">
-            <h3 style="margin-bottom: 4px;">🧪 Create GLP-1 Phase 1 Survey</h3>
+        <div class="modal-content" style="max-width: 560px;">
+            <h3 style="margin-bottom: 4px;">📤 Upload GLP-1 Survey JSON</h3>
             <p style="color: #666; font-size: 13px; margin: 0 0 20px 0;">
-                Generate the 75-question GLP-1 Phase 1 research study survey directly from the instrument template.
+                Upload a custom GLP-1 survey JSON file. The survey will be transformed and published directly — no AI generation.
             </p>
 
-            <div class="form-group" style="margin-bottom: 14px;">
+            <!-- File Upload Area -->
+            <div id="glp1DropZone" class="glp1-drop-zone" onclick="document.getElementById('glp1FileInput').click()">
+                <input type="file" id="glp1FileInput" accept=".json" style="display: none;" onchange="handleGLP1FileSelect(this)">
+                <div id="glp1DropContent">
+                    <span style="font-size: 32px;">📄</span>
+                    <p style="margin: 8px 0 4px 0; font-weight: 600; font-size: 14px;">Drop JSON file here or click to browse</p>
+                    <p style="margin: 0; color: #999; font-size: 12px;">Accepts .json files</p>
+                </div>
+                <div id="glp1FileInfo" style="display: none;">
+                    <span style="font-size: 24px;">✅</span>
+                    <p id="glp1FileName" style="margin: 4px 0 0 0; font-weight: 600; font-size: 14px;"></p>
+                    <p id="glp1FileStats" style="margin: 2px 0 0 0; color: #666; font-size: 12px;"></p>
+                    <button type="button" class="btn-ghost" style="margin-top: 6px; font-size: 11px;" onclick="event.stopPropagation(); clearGLP1File()">✕ Remove</button>
+                </div>
+            </div>
+
+            <!-- Sections Preview -->
+            <div id="glp1SectionsPreview" style="display: none; margin-top: 12px; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; background: #f9fafb;">
+                <h4 style="margin: 0 0 8px 0; font-size: 13px; color: #333;">📋 Sections Detected</h4>
+                <div id="glp1SectionsList" style="font-size: 12px; color: #555; max-height: 120px; overflow-y: auto;"></div>
+            </div>
+
+            <!-- Warnings Area -->
+            <div id="glp1WarningsArea" style="display: none; margin-top: 12px; border: 1px solid #f0ad4e; border-radius: 8px; padding: 12px; background: #fef9e7;">
+                <h4 style="margin: 0 0 6px 0; font-size: 13px; color: #8a6d3b;">⚠️ Warnings</h4>
+                <ul id="glp1WarningsList" style="margin: 0; padding-left: 18px; font-size: 12px; color: #8a6d3b;"></ul>
+            </div>
+
+            <div class="form-group" style="margin-top: 14px; margin-bottom: 14px;">
                 <label style="font-size: 13px; font-weight: 600;">Survey Title</label>
                 <input type="text" id="glp1Title" value="GLP-1 Phase 1 Consumer Research Survey" class="form-control">
             </div>
@@ -1529,7 +1557,7 @@ async function uploadConceptImage(id) {
 
             <div class="button-group" style="margin-top: 16px;">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="closeGLP1SurveyModal()">Cancel</button>
-                <button type="button" class="btn btn-primary btn-sm" id="createGlp1Btn" onclick="submitGLP1SurveyCreation()">🚀 Create Survey</button>
+                <button type="button" class="btn btn-primary btn-sm" id="createGlp1Btn" onclick="submitGLP1SurveyCreation()" disabled>📤 Upload & Publish</button>
             </div>
         </div>
     </div>
