@@ -253,14 +253,92 @@ function showSurveysList() {
 // GLP-1 SURVEY CREATION
 // ═════════════════════════════════════════════════════════
 
+let glp1UploadedJson = null;
+
 function openGLP1SurveyModal() {
     const modal = document.getElementById('glp1SurveyModal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) {
+        modal.style.display = 'flex';
+        clearGLP1File();
+    }
 }
 
 function closeGLP1SurveyModal() {
     const modal = document.getElementById('glp1SurveyModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        clearGLP1File();
+    }
+}
+
+function handleGLP1FileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const json = JSON.parse(e.target.result);
+            glp1UploadedJson = json;
+            
+            // UI Updates
+            document.getElementById('glp1DropContent').style.display = 'none';
+            const fileInfo = document.getElementById('glp1FileInfo');
+            fileInfo.style.display = 'block';
+            document.getElementById('glp1FileName').textContent = file.name;
+            
+            const qCount = (json.questions || []).length;
+            document.getElementById('glp1FileStats').textContent = `${qCount} questions detected`;
+
+            // Detect Sections
+            const sections = new Set();
+            (json.questions || []).forEach(q => {
+                if (q.section) sections.add(q.section);
+            });
+            
+            const sectionsPreview = document.getElementById('glp1SectionsPreview');
+            const sectionsList = document.getElementById('glp1SectionsList');
+            if (sections.size > 0) {
+                sectionsPreview.style.display = 'block';
+                sectionsList.innerHTML = Array.from(sections)
+                    .map(s => `<div style="padding: 4px 0; border-bottom: 1px solid #eee;">• ${escapeHTML(s)}</div>`)
+                    .join('');
+            } else {
+                sectionsPreview.style.display = 'none';
+            }
+
+            document.getElementById('createGlp1Btn').disabled = false;
+        } catch (err) {
+            showToast('Invalid JSON file', 'error');
+            clearGLP1File();
+        }
+    };
+    reader.readAsText(file);
+}
+
+function clearGLP1File() {
+    glp1UploadedJson = null;
+    const input = document.getElementById('glp1FileInput');
+    if (input) input.value = '';
+    
+    document.getElementById('glp1DropContent').style.display = 'block';
+    document.getElementById('glp1FileInfo').style.display = 'none';
+    document.getElementById('glp1SectionsPreview').style.display = 'none';
+    document.getElementById('glp1WarningsArea').style.display = 'none';
+    document.getElementById('createGlp1Btn').disabled = true;
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, 
+        tag => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            "'": '&#39;',
+            '"': '&quot;'
+        }[tag] || tag)
+    );
 }
 
 async function submitGLP1SurveyCreation() {
@@ -280,15 +358,20 @@ async function submitGLP1SurveyCreation() {
     const btn = document.getElementById('createGlp1Btn');
     if (btn) {
         btn.disabled = true;
-        btn.textContent = 'Creating...';
+        btn.textContent = 'Uploading...';
     }
 
     try {
         const payload = {
             title,
             points,
-            max_responses: maxResponses
+            max_responses: maxResponses,
+            auto_publish: true
         };
+
+        if (glp1UploadedJson) {
+            payload.survey_json = glp1UploadedJson;
+        }
 
         const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/surveys/create-glp1`, {
             method: 'POST',
@@ -296,22 +379,38 @@ async function submitGLP1SurveyCreation() {
             body: JSON.stringify(payload)
         });
 
+        const data = await response.json();
+
         if (!response.ok) {
-            const err = await response.json().catch(() => ({}));
-            throw new Error(err.detail || 'Failed to create GLP-1 survey');
+            throw new Error(data.detail || 'Failed to create GLP-1 survey');
         }
 
-        const data = await response.json();
-        showToast(`✅ GLP-1 survey created with ${data.questions_count} questions!`, 'success');
-        closeGLP1SurveyModal();
-        showSurveysList();
+        if (data.warnings && data.warnings.length > 0) {
+            const warningsArea = document.getElementById('glp1WarningsArea');
+            const warningsList = document.getElementById('glp1WarningsList');
+            warningsArea.style.display = 'block';
+            warningsList.innerHTML = data.warnings.map(w => `<li>${escapeHTML(w)}</li>`).join('');
+            
+            showToast(`✅ Survey published with ${data.questions_count} questions (Check warnings)`, 'warning');
+            
+            // Don't close modal immediately if there are warnings so user can read them
+            setTimeout(() => {
+                closeGLP1SurveyModal();
+                showSurveysList();
+            }, 3000);
+        } else {
+            showToast(`✅ GLP-1 survey published with ${data.questions_count} questions!`, 'success');
+            closeGLP1SurveyModal();
+            showSurveysList();
+        }
+
     } catch (e) {
         console.error('Error creating GLP-1 survey:', e);
         showToast(e.message || 'Error creating GLP-1 survey', 'error');
     } finally {
         if (btn) {
             btn.disabled = false;
-            btn.textContent = '🚀 Create Survey';
+            btn.textContent = '📤 Upload & Publish';
         }
     }
 }
