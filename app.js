@@ -2155,6 +2155,11 @@ async function downloadMetricsJSON() {
             survey_title: currentSurveyData.title,
             survey_description: currentSurveyData.description,
             exported_at: new Date().toISOString(),
+            // Flat headline values averaged across concepts (empty for single-concept
+            // surveys). For multi-concept surveys the per-concept truth is in
+            // metrics.concepts; these keys mirror what non-multi-concept surveys
+            // expose directly under metrics.metrics.
+            aggregate_summary: conceptAverages(currentSurveyMetrics && currentSurveyMetrics.concepts),
             metrics: currentSurveyMetrics
         };
 
@@ -2385,7 +2390,7 @@ function renderSegmentComparison(segmentKey, segmentDataArray) {
         perceived_quality_score:   { label: 'Perceived Quality', icon: '⭐', unit: '/5' },
         shelf_impact_score:        { label: 'Shelf Impact',      icon: '📦', unit: '/5' },
         repeat_intent_percent:     { label: 'Repeat Intent',     icon: '🔄', unit: '%' },
-        appeal_score:              { label: 'Appeal',            icon: '❤️', unit: '/5' },
+        appeal_score:              { label: 'Appeal',            icon: '❤️', unit: '' },
         decision_time_median_ms:   { label: 'Decision Time',     icon: '⏱️', unit: 'ms' },
         hesitation_rate_percent:   { label: 'Hesitation Rate',   icon: '🤔', unit: '%' },
         hard_rejection_percent:    { label: 'Hard Rejection',    icon: '🚫', unit: '%' },
@@ -2399,7 +2404,10 @@ function renderSegmentComparison(segmentKey, segmentDataArray) {
         <div class="concept-cards segment-kpi-cards">`;
 
     for (const seg of segmentDataArray) {
-        const metrics = seg.data.metrics || {};
+        // Multi-concept segments carry PI / RI / Appeal only under seg.data.concepts —
+        // fold in the concept averages so the headline rows are not blank/zero.
+        const segConcepts = seg.data.concepts || {};
+        const metrics = Object.assign({}, conceptAverages(segConcepts), seg.data.metrics || {});
         html += `<div class="concept-card segment-card">
             <div class="concept-card-title">${seg.value}</div>
             <div class="segment-card-n">n=${seg.data.respondent_count} (${seg.data.percent_of_total}%)</div>`;
@@ -2421,6 +2429,33 @@ function renderSegmentComparison(segmentKey, segmentDataArray) {
         }
         if (!hasAny) {
             html += `<div style="font-size: 12px; color: var(--color-text-tertiary); margin-top: 8px;">No KPI data</div>`;
+        }
+
+        // Per-concept breakdown for this segment (the hidden "Concept Comparison" block).
+        if (Object.keys(segConcepts).length > 0) {
+            const cml = {
+                purchase_intent: { label: 'Purchase Intent', icon: '🛒' },
+                repeat_intent:   { label: 'Repeat Intent', icon: '🔄' },
+                appeal:          { label: 'Appeal', icon: '❤️' },
+            };
+            let breakdown = '';
+            for (const concept of Object.values(segConcepts)) {
+                if (!concept || typeof concept !== 'object') continue;
+                const parts = Object.entries(cml)
+                    .filter(([k]) => typeof concept[k] === 'number')
+                    .map(([k, i]) => `${i.icon}&nbsp;${concept[k].toFixed(1)}`)
+                    .join('&nbsp;&nbsp;');
+                if (!parts) continue;
+                breakdown += `<div style="font-size: 11px; color: var(--color-text-secondary); margin-top: 3px;">
+                    <span style="font-weight: 600;">${concept.label || 'Concept'}</span> — ${parts}
+                </div>`;
+            }
+            if (breakdown) {
+                html += `<div style="margin-top: 10px; border-top: 1px solid var(--color-border, #e5e7eb); padding-top: 8px;">
+                    <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary); margin-bottom: 4px;">By concept</div>
+                    ${breakdown}
+                </div>`;
+            }
         }
         html += `</div>`;
     }
@@ -2555,6 +2590,37 @@ function parseRankingKey(keyStr) {
     }
 }
 
+// ── Concept-average headline metrics ─────────────────────────────────────
+// Multi-concept surveys return purchase_intent / repeat_intent / appeal ONLY
+// per concept (data.concepts[*]) — never as flat data.metrics.* keys. Collapse
+// them into flat headline keys (mean across concepts) so the KPI cards, the
+// segment view and the JSON export all show real numbers instead of blank/0.
+function conceptAverages(concepts) {
+    const MAP = {
+        purchase_intent: 'purchase_intent_percent',
+        repeat_intent:   'repeat_intent_percent',
+        appeal:          'appeal_score',
+        hard_rejection:  'hard_rejection_percent',
+        decision_time:   'decision_time_median_ms',
+        hesitation_rate: 'hesitation_rate_percent',
+    };
+    const buckets = {};
+    for (const concept of Object.values(concepts || {})) {
+        if (!concept || typeof concept !== 'object') continue;
+        for (const [srcKey, flatKey] of Object.entries(MAP)) {
+            const v = concept[srcKey];
+            if (typeof v === 'number' && !Number.isNaN(v)) {
+                (buckets[flatKey] = buckets[flatKey] || []).push(v);
+            }
+        }
+    }
+    const out = {};
+    for (const [flatKey, vals] of Object.entries(buckets)) {
+        if (vals.length) out[flatKey] = vals.reduce((a, b) => a + b, 0) / vals.length;
+    }
+    return out;
+}
+
 function displayMetrics(data) {
     // Store metrics data for download
     currentSurveyMetrics = data;
@@ -2567,9 +2633,18 @@ function displayMetrics(data) {
 
     // KPI metrics
     const kpiContainer = document.getElementById('kpiMetrics');
-    const metrics = data.metrics || {};
+    let metrics = data.metrics || {};
     const concepts = data.concepts || {};
     const isMultiConcept = data.is_multi_concept || false;
+
+    // Fold concept-averaged headline values into data.metrics so the KPI cards
+    // and the JSON export (currentSurveyMetrics === data) are not blank/zero for
+    // multi-concept surveys. Existing flat keys always win over the averages.
+    const conceptAveraged = isMultiConcept && Object.keys(concepts).length > 0;
+    if (conceptAveraged) {
+        data.metrics = Object.assign({}, conceptAverages(concepts), data.metrics || {});
+        metrics = data.metrics;
+    }
 
     if ((!metrics || Object.keys(metrics).length === 0) && !isMultiConcept) {
         kpiContainer.innerHTML = '<p class="no-data">No metrics data yet. Metrics are calculated after survey responses are submitted.</p>';
@@ -2584,6 +2659,7 @@ function displayMetrics(data) {
             purchase_intent: { label: 'Purchase Intent', icon: '🛒' },
             repeat_intent: { label: 'Repeat Intent', icon: '🔄' },
             appeal: { label: 'Appeal', icon: '❤️' },
+            hard_rejection: { label: 'Hard Rejection', icon: '🚫' },
             decision_time: { label: 'Decision Time', icon: '⏱️' },
             hesitation_rate: { label: 'Hesitation Rate', icon: '🤔' },
         };
@@ -2650,10 +2726,11 @@ function displayMetrics(data) {
         perceived_quality_score: { label: 'Perceived Quality', unit: '/5', icon: '⭐' },
         shelf_impact_score: { label: 'Shelf Impact', unit: '/5', icon: '📦' },
         repeat_intent_percent: { label: 'Repeat Intent', unit: '%', icon: '🔄' },
-        appeal_score: { label: 'Appeal', unit: '/5', icon: '❤️' },
+        appeal_score: { label: 'Appeal', unit: '', icon: '❤️' },
         decision_time_median_ms: { label: 'Decision Time', unit: 'ms', icon: '⏱️' },
         decision_time_mean_seconds: { label: 'Decision Time', unit: 's', icon: '⏱️' },
         hesitation_rate_percent: { label: 'Hesitation Rate', unit: '%', icon: '🤔' },
+        hard_rejection_percent: { label: 'Hard Rejection', unit: '%', icon: '🚫' },
     };
 
     let shownDecisionTime = false;
@@ -2681,6 +2758,9 @@ function displayMetrics(data) {
     }
 
     if (kpiCards.length > 0) {
+        if (conceptAveraged) {
+            kpiHTML += `<div class="metrics-section-title" style="margin-top: 4px;">Headline Metrics <span style="font-weight: 400; color: var(--color-text-tertiary);">(avg across concepts)</span></div>`;
+        }
         kpiHTML += kpiCards.join('');
     }
 
