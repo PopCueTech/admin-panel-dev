@@ -112,12 +112,14 @@ async function deletePanel(panelId) {
     }
 }
 
-async function loadPanelsForSurveyForm() {
+async function loadPanelsForSurveyForm(selectId = 'surveyPanel') {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+
     try {
         const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/admin/panels`);
         if (!response.ok) return;
         const panels = await response.json();
-        const select = document.getElementById('surveyPanel');
         const currentValue = select.value;
         select.innerHTML = '<option value="">— Public survey (no panel restriction) —</option>';
         panels.forEach(p => {
@@ -132,9 +134,12 @@ async function loadPanelsForSurveyForm() {
     }
 }
 
-// Wire up tenant change to reload panels
+// Wire up tenant change to reload panels (base survey form + GLP-1 upload modal)
 if (document.getElementById('tenantId')) {
-    document.getElementById('tenantId').addEventListener('change', loadPanelsForSurveyForm);
+    document.getElementById('tenantId').addEventListener('change', () => {
+        loadPanelsForSurveyForm();
+        loadPanelsForSurveyForm('glp1SurveyPanel');
+    });
 }
 
 

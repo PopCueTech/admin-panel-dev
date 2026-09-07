@@ -2284,6 +2284,14 @@ body {
 }
 
 /* GLP1 Custom Upload Styles */
+/* The GLP-1 upload modal grows tall once the sections preview, warnings, and
+   profile-attribute target conditions are all showing. Cap it to the viewport
+   and scroll internally so the Cancel/Create buttons stay reachable. */
+#glp1SurveyModal .modal-content {
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+}
+
 .glp1-drop-zone {
     border: 2px dashed #d1d5db;
     border-radius: 8px;

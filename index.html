@@ -1555,6 +1555,20 @@ async function uploadConceptImage(id) {
                 <input type="number" id="glp1MaxResponses" value="500" min="1" max="10000" class="form-control" style="max-width: 140px;">
             </div>
 
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label for="glp1SurveyPanel" style="font-size: 13px; font-weight: 600;">Restrict to Panel <span style="color: #999; font-weight: 400;">(optional)</span></label>
+                <select id="glp1SurveyPanel" class="form-control">
+                    <option value="">&mdash; Public survey (no panel restriction) &mdash;</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-size: 13px; font-weight: 600;">Target by Profile Attribute <span style="color: #999; font-weight: 400;">(optional)</span></label>
+                <small style="color:#9ca3af;display:block;margin-bottom:8px;">Only shows the survey to users whose profile attributes match. Every condition below must match (AND); within a condition, any toggled-on value counts (OR).</small>
+                <div id="glp1AttributeConditions"></div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addAttributeCondition('glp1AttributeConditions')" style="margin-top:8px;">+ Add Condition</button>
+            </div>
+
             <div class="button-group" style="margin-top: 16px;">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="closeGLP1SurveyModal()">Cancel</button>
                 <button type="button" class="btn btn-primary btn-sm" id="createGlp1Btn" onclick="submitGLP1SurveyCreation()" disabled>📄 Create as Draft</button>

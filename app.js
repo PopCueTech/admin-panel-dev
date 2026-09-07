@@ -267,7 +267,16 @@ function openGLP1SurveyModal() {
     if (modal) {
         modal.style.display = 'flex';
         clearGLP1File();
+        clearGLP1Targeting();
+        loadPanelsForSurveyForm('glp1SurveyPanel');
     }
+}
+
+/** Reset the GLP-1 modal's panel + profile-attribute targeting controls. */
+function clearGLP1Targeting() {
+    const panelSelect = document.getElementById('glp1SurveyPanel');
+    if (panelSelect) panelSelect.value = '';
+    resetAttributeConditions('glp1AttributeConditions');
 }
 
 function closeGLP1SurveyModal() {
@@ -275,6 +284,7 @@ function closeGLP1SurveyModal() {
     if (modal) {
         modal.style.display = 'none';
         clearGLP1File();
+        clearGLP1Targeting();
     }
 }
 
@@ -533,7 +543,16 @@ async function submitGLP1SurveyCreation() {
             max_responses: maxResponses,
             auto_publish: false,
             survey_json: glp1UploadedJson,
+            // null ⇒ public / unrestricted, matching the backend defaults
+            panel_id: document.getElementById('glp1SurveyPanel')?.value || null,
+            target_attributes: getTargetAttributesFromForm('glp1AttributeConditions'),
         };
+
+        // Keep the survey in the same tenant the panel list was drawn from —
+        // otherwise create-glp1 falls back to "first tenant in DB".
+        const glp1TenantId = document.getElementById('tenantId')?.value
+            || localStorage.getItem(TENANT_ID_KEY);
+        if (glp1TenantId) payload.tenant_id = glp1TenantId;
 
         const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/surveys/create-glp1`, {
             method: 'POST',

@@ -88,8 +88,8 @@ function _paRenderValueToggles(valuesContainer, values) {
     `).join('');
 }
 
-async function addAttributeCondition() {
-    const container = document.getElementById('attributeConditions');
+async function addAttributeCondition(containerId = 'attributeConditions') {
+    const container = document.getElementById(containerId);
     if (!container) return;
 
     const attributes = await _paLoadAttributes();
@@ -118,14 +118,14 @@ async function addAttributeCondition() {
     });
 }
 
-function resetAttributeConditions() {
-    const container = document.getElementById('attributeConditions');
+function resetAttributeConditions(containerId = 'attributeConditions') {
+    const container = document.getElementById(containerId);
     if (container) container.innerHTML = '';
     _paAttributesCache = null;
 }
 
-function getTargetAttributesFromForm() {
-    const container = document.getElementById('attributeConditions');
+function getTargetAttributesFromForm(containerId = 'attributeConditions') {
+    const container = document.getElementById(containerId);
     if (!container) return null;
 
     const conditions = [];
@@ -139,7 +139,11 @@ function getTargetAttributesFromForm() {
     return conditions.length > 0 ? conditions : null;
 }
 
-// Reset conditions when tenant changes, same as panel selector
+// Reset conditions when tenant changes, same as panel selector.
+// Wrapped in an arrow fn so the DOM Event is not passed in as containerId.
 if (document.getElementById('tenantId')) {
-    document.getElementById('tenantId').addEventListener('change', resetAttributeConditions);
+    document.getElementById('tenantId').addEventListener('change', () => {
+        resetAttributeConditions();
+        resetAttributeConditions('glp1AttributeConditions');
+    });
 }
