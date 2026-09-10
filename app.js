@@ -921,6 +921,8 @@ function hideAllSections() {
     if (uq) uq.style.display = 'none';
     const pa = document.getElementById('profileAttributesSection');
     if (pa) pa.style.display = 'none';
+    const geo = document.getElementById('geoSection');
+    if (geo) geo.style.display = 'none';
 }
 
 function setActiveTab(section) {
@@ -942,6 +944,7 @@ function setActiveTab(section) {
         validator: 'Survey validator',
         redemptions: 'Redemptions',
         'user-quality': 'User quality',
+        geo: 'Geographic distribution',
     };
 
     const titleEl = document.getElementById('pageTitle');

@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="auth.css">
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@4.3.4/build/index.umd.min.js"></script>
 </head>
 <body>
     <!-- Auth Screen -->
@@ -64,6 +65,10 @@
                     <div class="nav-item" data-section="surveys">
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M2 4h12M2 8h12M2 12h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
                         Surveys
+                    </div>
+                    <div class="nav-item" data-section="geo">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 14s5-4.2 5-8A5 5 0 003 6c0 3.8 5 8 5 8z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="8" cy="6" r="1.8" stroke="currentColor" stroke-width="1.2"/></svg>
+                        Geography
                     </div>
                 </div>
                 <div class="nav-group">
@@ -1201,6 +1206,46 @@
                 </div>
             </div>
             </div>
+            <!-- Geographic Distribution Section -->
+            <div id="geoSection" style="display: none; padding: 20px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                    <p class="content-header-sub" style="margin:0;">Where users are located, from the ZIP code collected at signup.</p>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="refreshGeoDistribution()">🔄 Refresh</button>
+                </div>
+
+                <div id="geoKpis" class="kpi-grid" style="margin-bottom:16px;"></div>
+
+                <div class="geo-map-wrap">
+                    <canvas id="geoMap"></canvas>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:16px 0;">
+                    <div class="geo-granularity" style="display:inline-flex; border:1px solid var(--color-border-tertiary, #e5e7eb); border-radius:8px; overflow:hidden;">
+                        <button type="button" class="btn btn-ghost btn-sm geo-gran-btn active" data-gran="state">By state</button>
+                        <button type="button" class="btn btn-ghost btn-sm geo-gran-btn" data-gran="city">By city</button>
+                        <button type="button" class="btn btn-ghost btn-sm geo-gran-btn" data-gran="zip">By ZIP</button>
+                    </div>
+                    <input type="search" id="geoSearch" placeholder="Filter…" style="flex:1; min-width:180px; max-width:280px; padding:7px 10px; border:1px solid #e5e7eb; border-radius:6px; font-size:13px;">
+                    <span id="geoRowCount" style="font-size:12px; color:#9ca3af;"></span>
+                </div>
+
+                <div class="surveys-table-container">
+                    <table class="surveys-table">
+                        <thead>
+                            <tr>
+                                <th class="geo-sort" data-key="place" style="cursor:pointer;">Place</th>
+                                <th class="geo-sort" data-key="state" style="cursor:pointer;">State</th>
+                                <th class="geo-sort" data-key="count" style="cursor:pointer; text-align:right;">Users</th>
+                                <th class="geo-sort" data-key="pct" style="cursor:pointer; text-align:right;">% of total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="geoTableBody">
+                            <tr><td colspan="4" style="text-align:center; padding:40px;">Loading…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div id="userQualitySection" style="display: none; padding: 20px;">
                 <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
                     <input type="search" id="uqSearch" placeholder="Search user, email…" style="flex:1; min-width:200px; max-width:320px; padding:7px 10px; border:1px solid #e5e7eb; border-radius:6px; font-size:13px;">
@@ -1583,6 +1628,7 @@ async function uploadConceptImage(id) {
     <script src="redemptions.js"></script>
     <script src="user_quality.js"></script>
     <script src="survey_quality.js"></script>
+    <script src="geo.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

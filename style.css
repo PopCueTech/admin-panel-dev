@@ -2207,6 +2207,22 @@ body {
 .abandon-bad  { background: rgba(226, 75, 74, 0.12); color: var(--color-error, #E24B4A); }
 .abandon-chart-wrap { position: relative; width: 100%; height: 240px; }
 
+/* Geographic distribution page */
+.geo-map-wrap {
+    position: relative;
+    width: 100%;
+    height: 440px;
+    background: var(--color-background-primary, #fff);
+    border: 0.5px solid var(--color-border-tertiary, #e5e7eb);
+    border-radius: var(--border-radius-lg, 12px);
+    padding: 8px;
+}
+.geo-gran-btn { border: none; border-radius: 0; background: transparent; white-space: nowrap; }
+.geo-gran-btn.active { background: var(--color-brand, #534AB7); color: #fff; }
+#geoTableBody td:nth-child(3),
+#geoTableBody td:nth-child(4) { text-align: right; font-variant-numeric: tabular-nums; }
+#geoTableBody tr.geo-unknown-row td { color: var(--color-text-tertiary, #9ca3af); font-style: italic; }
+
 /* Profile-attribute value toggles (survey targeting condition builder) */
 .pa-condition-row {
     display: flex;

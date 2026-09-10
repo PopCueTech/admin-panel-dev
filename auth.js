@@ -89,6 +89,7 @@ function showMainPanel() {
         validator: showValidatorPage,
         redemptions: showRedemptions,
         'user-quality': showUserQuality,
+        geo: showGeoDistribution,
     };
     document.querySelectorAll('.nav-item[data-section]').forEach(item => {
         item.addEventListener('click', () => sectionMap[item.dataset.section]?.());
