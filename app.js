@@ -1008,7 +1008,7 @@ async function loadSurveysList() {
     } catch (error) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 20px; color: var(--color-error);">
+                <td colspan="7" style="text-align: center; padding: 20px; color: var(--color-error);">
                     Error loading surveys: ${error.message}
                 </td>
             </tr>
@@ -1042,6 +1042,9 @@ function renderSurveysTable(surveys) {
                 </span>
             </td>
             <td>${survey.completed_count || 0} / ${survey.max_responses || 100}</td>
+            <td>${survey.completed_at
+                ? `<span title="Reached ${survey.max_responses} responses">${new Date(survey.completed_at).toLocaleDateString()}</span>`
+                : '<span style="color: var(--color-text-tertiary, #9ca3af);">—</span>'}</td>
             <td>${new Date(survey.created_at).toLocaleDateString()}</td>
             <td style="display: flex; gap: 4px;">
                 <button class="btn-ghost" onclick="viewSurvey('${survey.id}')">View</button>
