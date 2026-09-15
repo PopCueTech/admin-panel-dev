@@ -15,10 +15,16 @@ let _geoSort = { key: 'count', dir: 'desc' };
 let _geoControlsWired = false;
 
 const GEO_BRAND_RGB = [83, 74, 183];   // #534AB7
+// Any state with at least one user is floored to this much of the way toward
+// the brand color, so a handful of big states don't crush everyone else's
+// shading down to indistinguishable-from-white. Only a true 0-count state
+// stays pure white. Keeps low-engagement states (e.g. 1-50 users) visibly,
+// lightly tinted instead of disappearing into the map.
+const GEO_MIN_VISIBLE_T = 0.16;
 
 function _geoLerpColor(t) {
     t = Math.max(0, Math.min(1, t));
-    const eased = Math.sqrt(t);          // lift the low end so small counts stay visible
+    const eased = t === 0 ? 0 : Math.max(GEO_MIN_VISIBLE_T, Math.sqrt(t));
     const c = [255, 255, 255].map((w, i) => Math.round(w + (GEO_BRAND_RGB[i] - w) * eased));
     return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 }
@@ -147,7 +153,11 @@ async function renderGeoMap() {
                 projection: { axis: 'x', projection: 'albersUsa' },
                 color: {
                     axis: 'x',
-                    quantize: 5,
+                    // Continuous (not binned into a handful of quantize steps) so
+                    // _geoLerpColor's per-state floor actually takes effect —
+                    // quantize:5 was rounding every low-count state into the same
+                    // "t=0" bucket as true zero, which is what made them invisible.
+                    quantize: 0,
                     interpolate: _geoLerpColor,
                     missing: '#f3f4f6',
                     legend: { position: 'bottom-right', align: 'right' },
