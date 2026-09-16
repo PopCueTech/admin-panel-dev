@@ -2026,15 +2026,23 @@ function showSurveyDetails(survey) {
         document.getElementById('surveyQuestionsDetail').textContent = questions.length;
 
         questionsList.innerHTML = questions.map((q, idx) => {
-            const options = q.answers || q.options || [];
+            // Question text lives in `title` and its answer options live inside
+            // `data`, keyed per type (mcq: options, image_selection: images,
+            // ranking: items, multi_slider: sliders) - see the QUESTION
+            // STRUCTURE shape in app/services/openai_service.py and the
+            // platform_q dict built in app/services/glp1_json_transformer.py.
+            // `label`/`text` at the top level and `answers` never existed on a
+            // real question, hence every question rendering as "Untitled".
+            const qData = q.data || {};
+            const options = qData.options || qData.images || qData.items || qData.sliders || q.answers || q.options || [];
             const optionsHTML = options.length > 0 ? `
                 <div style="margin-top: 8px; padding-left: 12px; border-left: 2px solid #e5e7eb;">
-                    ${options.map(opt => `<div style="font-size: 0.9em; color: #666; padding: 4px 0;">• ${opt.label || opt.text || opt}</div>`).join('')}
+                    ${options.map(opt => `<div style="font-size: 0.9em; color: #666; padding: 4px 0;">• ${escapeHTML(typeof opt === 'string' ? opt : (opt.text || opt.label || opt.id || ''))}</div>`).join('')}
                 </div>
             ` : '';
             return `
                 <div class="question-item">
-                    <strong>Q${idx + 1}:</strong> ${q.label || q.text || 'Untitled Question'}
+                    <strong>Q${idx + 1}:</strong> ${escapeHTML(q.title || q.label || q.text || 'Untitled Question')}
                     <span class="question-type">(${q.type})</span>
                     ${optionsHTML}
                 </div>
