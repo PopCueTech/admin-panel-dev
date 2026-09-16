@@ -1118,8 +1118,9 @@ function wireUpSurveyFilters() {
 
 async function viewSurvey(surveyId) {
     try {
-        // Fetch survey details using the regular endpoint
-        const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/surveys/${surveyId}`, {
+        // Admin-only detail endpoint - also returns panel/targeting info that
+        // the regular user-facing survey endpoint intentionally omits.
+        const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/admin/surveys/${surveyId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' }
         });
@@ -1979,6 +1980,31 @@ function showSurveyDetails(survey) {
     document.getElementById('surveyPointsDetail').textContent = survey.points || 0;
     document.getElementById('surveyMaxResponsesDetail').textContent = survey.max_responses || 100;
     document.getElementById('surveyCreatedDetail').textContent = new Date(survey.created_at).toLocaleDateString();
+
+    // Panel restriction
+    const panelEl = document.getElementById('surveyPanelDetail');
+    if (panelEl) {
+        panelEl.textContent = survey.panel_name
+            ? `${survey.panel_name}${survey.panel_code ? ` (${survey.panel_code})` : ''}`
+            : 'Public (no panel restriction)';
+    }
+
+    // Profile-attribute targeting
+    const targetingEl = document.getElementById('surveyTargetingDetail');
+    if (targetingEl) {
+        const conditions = survey.target_attributes || [];
+        if (conditions.length === 0) {
+            targetingEl.innerHTML = '<span style="color: var(--color-text-tertiary, #9ca3af);">No profile-attribute targeting — open to all eligible users</span>';
+        } else {
+            targetingEl.innerHTML = conditions.map(cond => {
+                const label = escapeHTML(String(cond.key || '').replace(/_/g, ' ').replace(/\b\w/g, ch => ch.toUpperCase()));
+                const values = (cond.values || []).map(v =>
+                    `<span style="display:inline-block; margin:2px 4px 2px 0; padding:2px 9px; border-radius:999px; background:#ede9fe; color:#5b21b6; font-size:12px; font-weight:500;">${escapeHTML(String(v))}</span>`
+                ).join('');
+                return `<div style="margin-bottom:6px;"><strong style="font-size:13px;">${label}:</strong> ${values || '<span style="color:#9ca3af;">(no values)</span>'}</div>`;
+            }).join('');
+        }
+    }
 
     // Set status badge
     const statusBadge = document.getElementById('surveyStatusBadge');
