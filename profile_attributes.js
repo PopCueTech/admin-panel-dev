@@ -40,12 +40,13 @@ async function loadProfileAttributesList() {
                 ${attr.values.length === 0
                     ? '<p style="color:#999; font-size:13px; margin:0;">No values submitted yet.</p>'
                     : `<table class="surveys-table">
-                        <thead><tr><th>Value</th><th style="width:120px;">Count</th></tr></thead>
+                        <thead><tr><th>Value</th><th style="width:120px;">Count</th><th style="width:100px;">% of respondents</th></tr></thead>
                         <tbody>
                             ${attr.values.map(v => `
                                 <tr>
                                     <td>${escapePaHtml(v.value)}</td>
                                     <td>${v.count}</td>
+                                    <td>${attr.total_respondents > 0 ? (v.count / attr.total_respondents * 100).toFixed(1) + '%' : '—'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
