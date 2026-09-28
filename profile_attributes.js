@@ -49,6 +49,13 @@ async function loadProfileAttributesList() {
                                     <td>${attr.total_respondents > 0 ? (v.count / attr.total_respondents * 100).toFixed(1) + '%' : '—'}</td>
                                 </tr>
                             `).join('')}
+                            ${attr.not_provided > 0 ? `
+                                <tr style="color:#9ca3af; font-style:italic;">
+                                    <td>Not provided</td>
+                                    <td>${attr.not_provided}</td>
+                                    <td>${(attr.not_provided / attr.total_respondents * 100).toFixed(1)}%</td>
+                                </tr>
+                            ` : ''}
                         </tbody>
                     </table>`
                 }
