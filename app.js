@@ -1049,6 +1049,7 @@ function renderSurveysTable(surveys) {
             <td style="display: flex; gap: 4px;">
                 <button class="btn-ghost" onclick="viewSurvey('${survey.id}')">View</button>
                 ${!survey.is_active ? `<button class="btn-ghost btn-ghost-brand" onclick="publishSurveyDirect('${survey.id}')">Publish</button>` : ''}
+                ${!survey.is_active ? `<button class="btn-ghost btn-ghost-danger" onclick="deleteSurveyDirect('${survey.id}')">Delete</button>` : ''}
                 ${survey.is_active && (survey.completed_count || 0) < (survey.max_responses || 100)
                     ? `<button class="btn-ghost" onclick="notifyRemainingParticipants('${survey.id}')">🔔 Notify remaining</button>`
                     : ''}
@@ -1163,6 +1164,34 @@ async function publishSurveyDirect(surveyId) {
     } catch (error) {
         showToast(`Error: ${error.message}`, 'error');
         console.error('Publish error:', error);
+    }
+}
+
+async function deleteSurveyDirect(surveyId) {
+    const survey = (typeof allSurveys !== 'undefined' ? allSurveys : []).find(s => s.id === surveyId);
+    const title = survey?.title || 'this survey';
+    const hasResponses = (survey?.completed_count || 0) > 0;
+    const warning = hasResponses
+        ? `\n\nIt has ${survey.completed_count} completed response(s), which will be permanently deleted too.`
+        : '';
+    if (!confirm(`Permanently delete "${title}"?${warning}\n\nThis cannot be undone.`)) return;
+
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/admin/surveys/${surveyId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.detail || 'Failed to delete survey');
+        }
+
+        const data = await response.json();
+        showToast(`🗑️ ${data.message}`, 'success');
+        loadSurveysList();
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+        console.error('Delete error:', error);
     }
 }
 

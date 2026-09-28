@@ -2322,3 +2322,13 @@ body {
     border-color: #6366f1;
     background: #eef2ff;
 }
+
+.btn-ghost-danger {
+    border-color: #c62828;
+    color: #c62828;
+}
+.btn-ghost-danger:hover {
+    background: rgba(198, 40, 40, 0.08);
+    border-color: #c62828;
+    color: #b71c1c;
+}
