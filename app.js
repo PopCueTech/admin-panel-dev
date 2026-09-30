@@ -913,6 +913,8 @@ function hideAllSections() {
     document.getElementById('panelsSection').style.display = 'none';
     const rd = document.getElementById('redemptionsSection');
     if (rd) rd.style.display = 'none';
+    const st = document.getElementById('supportTicketsSection');
+    if (st) st.style.display = 'none';
     const pq = document.getElementById('profileQuestionnairesSection');
     if (pq) pq.style.display = 'none';
     const vs = document.getElementById('validatorSection');
@@ -943,6 +945,7 @@ function setActiveTab(section) {
         'backfill-metrics': 'Backfill metrics',
         validator: 'Survey validator',
         redemptions: 'Redemptions',
+        'support-tickets': 'Support tickets',
         'user-quality': 'User quality',
         geo: 'Geographic distribution',
     };

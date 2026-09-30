@@ -88,6 +88,7 @@ function showMainPanel() {
         'backfill-metrics': showBackfillMetrics,
         validator: showValidatorPage,
         redemptions: showRedemptions,
+        'support-tickets': showSupportTickets,
         'user-quality': showUserQuality,
         geo: showGeoDistribution,
     };
