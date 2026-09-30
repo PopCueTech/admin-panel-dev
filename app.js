@@ -447,7 +447,15 @@ function handleGLP1FileSelect(input) {
 
             // Valid JSON — store and update UI
             glp1UploadedJson = json;
-            
+
+            // Reflect the file's own textVerification value if it set one
+            // explicitly; otherwise default the checkbox to on, same as the
+            // backend default (glp1_json_transformer.py: absent/true = verify).
+            const textVerificationCheckbox = document.getElementById('glp1TextVerification');
+            if (textVerificationCheckbox) {
+                textVerificationCheckbox.checked = json.textVerification !== false;
+            }
+
             document.getElementById('glp1DropContent').style.display = 'none';
             const fileInfo = document.getElementById('glp1FileInfo');
             fileInfo.style.display = 'block';
@@ -496,6 +504,8 @@ function clearGLP1File() {
     document.getElementById('glp1SectionsPreview').style.display = 'none';
     document.getElementById('glp1WarningsArea').style.display = 'none';
     document.getElementById('createGlp1Btn').disabled = true;
+    const textVerificationCheckbox = document.getElementById('glp1TextVerification');
+    if (textVerificationCheckbox) textVerificationCheckbox.checked = true;
 }
 
 function escapeHTML(str) {
@@ -537,12 +547,15 @@ async function submitGLP1SurveyCreation() {
     }
 
     try {
+        const textVerificationEnabled = document.getElementById('glp1TextVerification')?.checked !== false;
         const payload = {
             title,
             points,
             max_responses: maxResponses,
             auto_publish: false,
-            survey_json: glp1UploadedJson,
+            // Shallow-copy so unchecking this doesn't mutate the parsed file
+            // in memory (the checkbox can be toggled again before submit).
+            survey_json: { ...glp1UploadedJson, textVerification: textVerificationEnabled },
             // null ⇒ public / unrestricted, matching the backend defaults
             panel_id: document.getElementById('glp1SurveyPanel')?.value || null,
             target_attributes: getTargetAttributesFromForm('glp1AttributeConditions'),

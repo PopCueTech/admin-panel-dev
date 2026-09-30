@@ -1687,6 +1687,16 @@ async function uploadConceptImage(id) {
             </div>
 
             <div class="form-group" style="margin-bottom: 16px;">
+                <label style="font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="glp1TextVerification" checked style="width: 16px; height: 16px;">
+                    Verify free-text answers on this survey
+                </label>
+                <small style="color:#9ca3af;display:block;margin-top:4px;margin-left:24px;">
+                    When on (default), text questions reject gibberish/junk answers on-device before the user can continue. Turn off only if this survey's text questions genuinely accept short or unusual free-text input.
+                </small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
                 <label for="glp1SurveyPanel" style="font-size: 13px; font-weight: 600;">Restrict to Panel <span style="color: #999; font-weight: 400;">(optional)</span></label>
                 <select id="glp1SurveyPanel" class="form-control">
                     <option value="">&mdash; Public survey (no panel restriction) &mdash;</option>
