@@ -1500,6 +1500,7 @@ async function generateSurvey() {
     const panelId = document.getElementById('surveyPanel').value || null;
     const aiProvider = document.getElementById('aiProvider').value || null;
     const targetAttributes = getTargetAttributesFromForm();
+    const textVerification = document.getElementById('aiSurveyTextVerification')?.checked !== false;
 
     if (!name || !description || !context || !tenantId || !surveyType) {
         showToast('Please fill in all required fields', 'error');
@@ -1530,7 +1531,8 @@ async function generateSurvey() {
                 panel_id: panelId,
                 ai_provider: aiProvider,
                 target_attributes: targetAttributes,
-                custom_questions: uploadedCustomQuestionsPayload
+                custom_questions: uploadedCustomQuestionsPayload,
+                text_verification: textVerification
             })
         });
 
