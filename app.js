@@ -1033,6 +1033,21 @@ async function loadSurveysList() {
     }
 }
 
+// Maps a survey's status ("published" | "rolled_back" | "draft") to its badge
+// label/class. Falls back to is_active for any survey fetched before the
+// backend started returning `status`.
+function getSurveyStatusBadge(survey) {
+    const status = survey.status || (survey.is_active ? 'published' : 'draft');
+    switch (status) {
+        case 'published':
+            return { className: 'status-active', label: '✓ Published' };
+        case 'rolled_back':
+            return { className: 'status-rolledback', label: '↩ Rolled Back' };
+        default:
+            return { className: 'status-draft', label: '⏱ Draft' };
+    }
+}
+
 function renderSurveysTable(surveys) {
     const tableBody = document.getElementById('surveysTableBody');
     const noSurveysMessage = document.getElementById('noSurveysMessage');
@@ -1048,13 +1063,15 @@ function renderSurveysTable(surveys) {
     if (noSurveysMessage) noSurveysMessage.style.display = 'none';
 
     // Populate table with surveys
-    tableBody.innerHTML = surveys.map(survey => `
+    tableBody.innerHTML = surveys.map(survey => {
+        const badge = getSurveyStatusBadge(survey);
+        return `
         <tr>
             <td><strong>${survey.title || 'Untitled'}</strong></td>
             <td>${survey.questions_count || 0}</td>
             <td>
-                <span class="status-${survey.is_active ? 'active' : 'draft'}">
-                    ${survey.is_active ? '✓ Published' : '⏱ Draft'}
+                <span class="${badge.className}">
+                    ${badge.label}
                 </span>
             </td>
             <td>${survey.completed_count || 0} / ${survey.max_responses || 100}</td>
@@ -1071,7 +1088,8 @@ function renderSurveysTable(surveys) {
                     : ''}
             </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function updateSurveysCount() {
@@ -1087,9 +1105,8 @@ function filterSurveys() {
 
     const filtered = allSurveys.filter(s => {
         const matchTitle = !q || (s.title || '').toLowerCase().includes(q);
-        const matchStatus = !status
-            || (status === 'published' && s.is_active)
-            || (status === 'draft' && !s.is_active);
+        const surveyStatus = s.status || (s.is_active ? 'published' : 'draft');
+        const matchStatus = !status || surveyStatus === status;
         return matchTitle && matchStatus;
     });
 
@@ -2055,13 +2072,9 @@ function showSurveyDetails(survey) {
 
     // Set status badge
     const statusBadge = document.getElementById('surveyStatusBadge');
-    if (survey.is_active) {
-        statusBadge.textContent = '✓ Published';
-        statusBadge.className = 'status-badge status-active';
-    } else {
-        statusBadge.textContent = '⏱ Draft';
-        statusBadge.className = 'status-badge status-draft';
-    }
+    const detailBadge = getSurveyStatusBadge(survey);
+    statusBadge.textContent = detailBadge.label;
+    statusBadge.className = `status-badge ${detailBadge.className}`;
 
     // Client-side structure validation banner
     renderValidationBanner('surveyValidationBannerDetail', survey.current_version && survey.current_version.structure);

@@ -400,6 +400,19 @@ body {
     letter-spacing: 0.2px;
 }
 
+/* Was published, then taken down again - distinct from "never published" draft */
+.status-rolledback {
+    display: inline-flex;
+    align-items: center;
+    background: var(--color-background-tertiary);
+    color: var(--color-text-secondary);
+    padding: 3px 8px;
+    border-radius: var(--border-radius-sm);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+}
+
 /* Filter toolbar */
 .surveys-toolbar {
     display: flex;
