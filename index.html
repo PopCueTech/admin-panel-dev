@@ -30,6 +30,13 @@
             </div>
             <button id="loginBtn" class="btn btn-primary" onclick="login()" style="width: 100%; margin-top: 4px;">Sign in</button>
             <p class="auth-hint" style="margin-top: 16px;">Use your PopCue account credentials</p>
+            <div class="auth-env-toggle">
+                <span class="auth-env-label">Environment</span>
+                <div class="env-toggle">
+                    <button class="env-btn active" data-env="prod" onclick="switchEnvironment('prod')">Production</button>
+                    <button class="env-btn" data-env="dev" onclick="switchEnvironment('dev')">Dev</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -41,6 +48,12 @@
             <div class="sidebar-header">
                 <div class="sidebar-logo">PC</div>
                 <span class="sidebar-title">PopCue</span>
+            </div>
+            <div class="sidebar-env">
+                <div class="env-toggle">
+                    <button class="env-btn active" data-env="prod">Production</button>
+                    <button class="env-btn" data-env="dev">Dev</button>
+                </div>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-group">
@@ -528,7 +541,6 @@
                             <select id="surveysStatusFilter">
                                 <option value="">All statuses</option>
                                 <option value="published">Published</option>
-                                <option value="rolled_back">Rolled Back</option>
                                 <option value="draft">Draft</option>
                             </select>
                             <button id="surveysClearFilters" class="btn btn-secondary btn-sm" style="display: none;">Clear</button>

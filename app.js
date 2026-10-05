@@ -2,13 +2,15 @@
 // CONFIGURATION
 // ═════════════════════════════════════════════════════════
 
-// Replaced at deploy time by the deploy-admin-{prod,dev}.yml workflow.
-const API_BASE_URL = '__API_BASE_URL__';
+const API_URL_PROD = 'https://popcue-api-prod-g7mtgi7cwa-uc.a.run.app';
+const API_URL_DEV = 'https://popcue-api-812411253957.us-central1.run.app';
 const TOKEN_KEY = 'popcue_admin_token';
 const REFRESH_TOKEN_KEY = 'popcue_admin_refresh_token';
 const USER_KEY = 'popcue_admin_user';
 const TENANT_ID_KEY = 'popcue_admin_tenant_id';
+const ENV_KEY = 'popcue_admin_env';
 
+let API_BASE_URL = API_URL_PROD;
 let currentUser = null;
 let currentToken = null;
 let currentSurveyData = null;
@@ -169,6 +171,10 @@ async function checkExistingAnalyticsState(surveyId) {
 // ═════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Load saved environment
+    const savedEnv = localStorage.getItem(ENV_KEY) || 'prod';
+    applyEnvironment(savedEnv);
+
     // Check if user is already logged in
     const savedToken = localStorage.getItem(TOKEN_KEY);
     const savedUser = localStorage.getItem(USER_KEY);
