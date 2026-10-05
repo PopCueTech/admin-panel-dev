@@ -2,15 +2,13 @@
 // CONFIGURATION
 // ═════════════════════════════════════════════════════════
 
-const API_URL_PROD = 'https://popcue-api-prod-g7mtgi7cwa-uc.a.run.app';
-const API_URL_DEV = 'https://popcue-api-812411253957.us-central1.run.app';
+// Replaced at deploy time by the deploy-admin-{prod,dev}.yml workflow.
+const API_BASE_URL = '__API_BASE_URL__';
 const TOKEN_KEY = 'popcue_admin_token';
 const REFRESH_TOKEN_KEY = 'popcue_admin_refresh_token';
 const USER_KEY = 'popcue_admin_user';
 const TENANT_ID_KEY = 'popcue_admin_tenant_id';
-const ENV_KEY = 'popcue_admin_env';
 
-let API_BASE_URL = API_URL_PROD;
 let currentUser = null;
 let currentToken = null;
 let currentSurveyData = null;
@@ -171,10 +169,6 @@ async function checkExistingAnalyticsState(surveyId) {
 // ═════════════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Load saved environment
-    const savedEnv = localStorage.getItem(ENV_KEY) || 'prod';
-    applyEnvironment(savedEnv);
-
     // Check if user is already logged in
     const savedToken = localStorage.getItem(TOKEN_KEY);
     const savedUser = localStorage.getItem(USER_KEY);
@@ -634,6 +628,7 @@ async function loadDashboard() {
         const data = await response.json();
         displayDashboard(data);
         loadAbandonment();
+        loadRetention();
 
     } catch (error) {
         console.error('Dashboard error:', error);
@@ -697,6 +692,54 @@ function displayDashboard(data) {
 // ═════════════════════════════════════════════════════════
 // DROP-OFF / ABANDONMENT ANALYTICS
 // ═════════════════════════════════════════════════════════
+
+async function loadRetention() {
+    const kpis = document.getElementById('retentionKpis');
+    const table = document.getElementById('retentionCohorts');
+    if (!kpis || !table) return;
+    try {
+        const response = await fetchWithAuth(`${API_BASE_URL}/api/v1/admin/retention`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        renderRetention(await response.json());
+    } catch (error) {
+        console.error('Retention error:', error);
+        table.querySelector('tbody').innerHTML =
+            `<tr><td class="abandon-empty">Failed to load: ${abandonEscape(error.message)}</td></tr>`;
+    }
+}
+
+function renderRetention(d) {
+    const fmt = v => (v == null ? '—' : `${v.toFixed(1)}%`);
+    const b = d.buckets || {};
+    const rr = w => (d.return_rates || []).find(x => x.window_days === w) || {};
+    document.getElementById('retentionKpis').innerHTML =
+        abandonKpi(d.total_users ?? 0, 'Users who completed a survey') +
+        abandonKpi(fmt(d.repeat_rate_pct), 'Repeat users (2+ surveys)') +
+        abandonKpi(b.one ?? 0, '1 survey') +
+        abandonKpi(b.two_three ?? 0, '2–3 surveys') +
+        abandonKpi(b.four_plus ?? 0, '4+ surveys') +
+        abandonKpi(fmt(rr(7).rate_pct), '7-day return rate') +
+        abandonKpi(fmt(rr(30).rate_pct), '30-day return rate');
+
+    const table = document.getElementById('retentionCohorts');
+    const cohorts = d.cohorts || [];
+    if (!cohorts.length) {
+        table.querySelector('thead').innerHTML = '';
+        table.querySelector('tbody').innerHTML = '<tr><td class="abandon-empty">No completed surveys yet.</td></tr>';
+        return;
+    }
+    const n = d.cohort_offsets || 8;
+    table.querySelector('thead').innerHTML = '<tr><th>Cohort (week of)</th><th>Users</th>' +
+        Array.from({length: n}, (_, i) => `<th>Wk +${i + 1}</th>`).join('') + '</tr>';
+    table.querySelector('tbody').innerHTML = cohorts.map(c => {
+        const cells = (c.retention_pct || []).map(v => {
+            if (v == null) return '<td></td>';
+            const alpha = Math.min(0.85, v / 100 * 1.6);
+            return `<td style="background: rgba(83, 74, 183, ${alpha.toFixed(2)}); ${alpha > 0.45 ? 'color:#fff;' : ''}">${v.toFixed(1)}%</td>`;
+        }).join('');
+        return `<tr><td>${abandonEscape(c.cohort_week)}</td><td>${c.users}</td>${cells}</tr>`;
+    }).join('');
+}
 
 let abandonmentSelectedSurveyId = null;
 let abandonmentFunnelChart = null;

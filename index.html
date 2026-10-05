@@ -30,13 +30,6 @@
             </div>
             <button id="loginBtn" class="btn btn-primary" onclick="login()" style="width: 100%; margin-top: 4px;">Sign in</button>
             <p class="auth-hint" style="margin-top: 16px;">Use your PopCue account credentials</p>
-            <div class="auth-env-toggle">
-                <span class="auth-env-label">Environment</span>
-                <div class="env-toggle">
-                    <button class="env-btn active" data-env="prod" onclick="switchEnvironment('prod')">Production</button>
-                    <button class="env-btn" data-env="dev" onclick="switchEnvironment('dev')">Dev</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -48,12 +41,6 @@
             <div class="sidebar-header">
                 <div class="sidebar-logo">PC</div>
                 <span class="sidebar-title">PopCue</span>
-            </div>
-            <div class="sidebar-env">
-                <div class="env-toggle">
-                    <button class="env-btn active" data-env="prod">Production</button>
-                    <button class="env-btn" data-env="dev">Dev</button>
-                </div>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-group">
@@ -246,6 +233,20 @@
 
                 <div class="cache-info" id="cacheInfo">
                     <small>Cached: <span id="cacheAge">-</span> | Expires in: <span id="cacheExpires">-</span></small>
+                </div>
+
+                <!-- User Retention -->
+                <div class="details-card" id="retentionCard" style="margin-top: 20px;">
+                    <h3>User Retention</h3>
+                    <p class="abandon-caveat">Do users come back? Based on completed standard surveys (profile questionnaires excluded). "Returned" means the user completed a different survey within the window after their first one.</p>
+                    <div class="kpi-grid" id="retentionKpis"></div>
+                    <div class="abandon-subtitle">Weekly Cohort Retention <span class="abandon-hint">(% of each cohort, by week of first completed survey, active again N weeks later; blank = week not finished yet)</span></div>
+                    <div class="abandon-table-wrap">
+                        <table class="abandon-table" id="retentionCohorts">
+                            <thead></thead>
+                            <tbody><tr><td class="abandon-empty">Loading…</td></tr></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Drop-off / Abandonment Analytics -->
