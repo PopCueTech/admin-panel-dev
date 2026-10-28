@@ -39,10 +39,13 @@ function _fmtDateShort(iso) {
 
 function redemptionStatusBadge(status) {
     const map = {
-        PENDING:   ['#fef3c7', '#92400e'],
-        DELIVERED: ['#dcfce7', '#166534'],
-        FAILED:    ['#fee2e2', '#991b1b'],
-        CANCELED:  ['#f3f4f6', '#6b7280'],
+        PROCESSING:   ['#e0e7ff', '#3730a3'],
+        PENDING:      ['#fef3c7', '#92400e'],
+        ISSUED:       ['#dcfce7', '#166534'],
+        DELIVERED:    ['#dcfce7', '#166534'],
+        UNDER_REVIEW: ['#ffedd5', '#9a3412'],
+        FAILED:       ['#fee2e2', '#991b1b'],
+        CANCELED:     ['#f3f4f6', '#6b7280'],
     };
     const [bg, fg] = map[status] || ['#f3f4f6', '#6b7280'];
     return `<span style="display:inline-block; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; background:${bg}; color:${fg};">${_esc(status || 'UNKNOWN')}</span>`;
@@ -102,7 +105,7 @@ function renderRedemptionsTable(items) {
             <td>${_esc(r.brand)}</td>
             <td>$${Number(r.voucher_value_usd || 0).toFixed(2)}</td>
             <td>${Number(r.points_redeemed || 0).toLocaleString()}</td>
-            <td>${redemptionStatusBadge(r.delivery_status)}${r.refunded ? ' <span style="font-size:10px; color:#991b1b;">(refunded)</span>' : ''}</td>
+            <td>${redemptionStatusBadge(r.reward_status || r.delivery_status)}${r.refunded ? ' <span style="font-size:10px; color:#991b1b;">(refunded)</span>' : ''}</td>
             <td style="white-space:nowrap;">${_fmtDateShort(r.redeemed_at)}</td>
             <td><button type="button" class="btn btn-ghost btn-sm" onclick="viewRedemptionDetail('${r.id}')">View</button></td>
         </tr>
@@ -117,7 +120,7 @@ function filterRedemptions() {
         const matchQ = !q
             || (r.user_name || '').toLowerCase().includes(q)
             || (r.user_email || '').toLowerCase().includes(q);
-        const matchS = !status || r.delivery_status === status;
+        const matchS = !status || (r.reward_status || r.delivery_status) === status;
         return matchQ && matchS;
     });
 
@@ -167,23 +170,22 @@ function renderRedemptionDetailBody(item) {
     const row = (label, value) =>
         `<div><div style="color:#888; font-size:11px;">${label}</div><div>${value}</div></div>`;
 
-    const link = item.delivery_link
-        ? `<a href="${_esc(item.delivery_link)}" target="_blank" rel="noopener" style="color:#2563eb;">Open link ↗</a>`
-        : '—';
+    // The link itself is never sent to the admin panel (it grants access to the user's gift card)
+    const link = item.has_reward_link ? 'Available to user' : '—';
 
     const body = document.getElementById('redemptionDetailBody');
     body.innerHTML = [
         row('Reward', _esc(item.brand) + (item.voucher_name && item.voucher_name !== item.brand ? ` — ${_esc(item.voucher_name)}` : '')),
         row('Value', `$${Number(item.voucher_value_usd || 0).toFixed(2)}`),
         row('Points redeemed', Number(item.points_redeemed || 0).toLocaleString()),
-        row('Delivery status', redemptionStatusBadge(item.delivery_status)),
+        row('Reward status', redemptionStatusBadge(item.reward_status || item.delivery_status)),
         row('Order status', _esc(item.order_status || '—')),
         row('Refunded', item.refunded ? 'Yes' : 'No'),
         row('Redeemed at', _fmtDate(item.redeemed_at)),
         row('Delivered at', _fmtDate(item.delivered_at)),
         row('Expires at', _fmtDate(item.expires_at)),
         row('Voucher code', item.voucher_code ? `<code>${_esc(item.voucher_code)}</code>` : '—'),
-        row('Delivery link', link),
+        row('Reward link', link),
         row('Clicks', `${Number(item.total_clicks || 0)}${item.first_clicked_at ? ` (first ${_fmtDateShort(item.first_clicked_at)})` : ''}`),
         row('Recipient email', _esc(item.recipient_email || '—')),
         row('Order ID', `<span style="font-size:11px;">${_esc(item.order_id || '—')}</span>`),
@@ -263,7 +265,7 @@ async function refreshRedemptionStatus() {
         renderRedemptionDetailBody(updated);
         document.getElementById('redemptionUserBalance').textContent = Number(updated.current_balance || 0).toLocaleString();
         filterRedemptions(); // re-render the table preserving active filters
-        showToast(`Status: ${updated.delivery_status}`, 'success');
+        showToast(`Status: ${updated.reward_status || updated.delivery_status}`, 'success');
     } catch (error) {
         showToast(`Refresh failed: ${error.message}`, 'error');
     } finally {
