@@ -1403,7 +1403,19 @@ function stopRefreshTimer() {
     }
 }
 
-async function refreshAccessToken() {
+// One refresh at a time: pages fire several requests at once, and when the
+// access token expires they all get 401 together. Refresh tokens rotate, so
+// parallel refreshes would race and the losers' 401 would log the admin out.
+let _refreshInFlight = null;
+
+function refreshAccessToken() {
+    if (!_refreshInFlight) {
+        _refreshInFlight = _doRefreshAccessToken().finally(() => { _refreshInFlight = null; });
+    }
+    return _refreshInFlight;
+}
+
+async function _doRefreshAccessToken() {
     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (!refreshToken) {
         console.warn('No refresh token available');
@@ -1448,9 +1460,11 @@ async function fetchWithAuth(url, options = {}) {
 
     let response = await fetch(url, options);
 
-    // If 401, attempt token refresh and retry once
+    // If 401, attempt token refresh and retry once. Skip the refresh when another
+    // request already refreshed the token after this one was sent.
     if (response.status === 401) {
-        const refreshed = await refreshAccessToken();
+        const sentWith = options.headers['Authorization'];
+        const refreshed = sentWith !== `Bearer ${currentToken}` ? true : await refreshAccessToken();
         if (refreshed) {
             options.headers['Authorization'] = `Bearer ${currentToken}`;
             response = await fetch(url, options);
