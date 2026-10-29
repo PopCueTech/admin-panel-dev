@@ -91,6 +91,7 @@ function showMainPanel() {
         'support-tickets': showSupportTickets,
         'user-quality': showUserQuality,
         geo: showGeoDistribution,
+        fraud: showFraudRisk,
     };
     document.querySelectorAll('.nav-item[data-section]').forEach(item => {
         item.addEventListener('click', () => sectionMap[item.dataset.section]?.());

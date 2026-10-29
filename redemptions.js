@@ -44,6 +44,7 @@ function redemptionStatusBadge(status) {
         ISSUED:       ['#dcfce7', '#166534'],
         DELIVERED:    ['#dcfce7', '#166534'],
         UNDER_REVIEW: ['#ffedd5', '#9a3412'],
+        HELD_FOR_REVIEW: ['#fef3c7', '#92400e'],
         FAILED:       ['#fee2e2', '#991b1b'],
         CANCELED:     ['#f3f4f6', '#6b7280'],
     };

@@ -987,6 +987,8 @@ function hideAllSections() {
     if (pa) pa.style.display = 'none';
     const geo = document.getElementById('geoSection');
     if (geo) geo.style.display = 'none';
+    const fraud = document.getElementById('fraudSection');
+    if (fraud) fraud.style.display = 'none';
 }
 
 function setActiveTab(section) {
@@ -1010,6 +1012,7 @@ function setActiveTab(section) {
         'support-tickets': 'Support tickets',
         'user-quality': 'User quality',
         geo: 'Geographic distribution',
+        fraud: 'Fraud & IP risk',
     };
 
     const titleEl = document.getElementById('pageTitle');
