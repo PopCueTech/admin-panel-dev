@@ -329,8 +329,8 @@ function validateGLP1Json(json) {
             errors.push(`${loc}: Invalid question type "${q.type}". Valid types: ${GLP1_VALID_QUESTION_TYPES.join(', ')}`);
         }
 
-        if (!q.title && q.type !== 'information_screen') {
-            warnings.push(`${loc}: Missing "title" — question text will be empty.`);
+        if (!q.title && !q.description && !q.text && q.type !== 'information_screen') {
+            warnings.push(`${loc}: Missing "title" or "description" — question text will be empty.`);
         }
 
         // Type-specific data validation
@@ -405,7 +405,7 @@ function handleGLP1FileSelect(input) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         try {
             const json = JSON.parse(e.target.result);
 
@@ -460,7 +460,7 @@ function handleGLP1FileSelect(input) {
             const fileInfo = document.getElementById('glp1FileInfo');
             fileInfo.style.display = 'block';
             document.getElementById('glp1FileName').textContent = file.name;
-            
+
             const qCount = (json.questions || []).length;
             const statsEl = document.getElementById('glp1FileStats');
             statsEl.textContent = `✅ ${qCount} questions — valid`;
@@ -471,7 +471,7 @@ function handleGLP1FileSelect(input) {
             (json.questions || []).forEach(q => {
                 if (q.section) sections.add(q.section);
             });
-            
+
             const sectionsPreview = document.getElementById('glp1SectionsPreview');
             const sectionsList = document.getElementById('glp1SectionsList');
             if (sections.size > 0) {
@@ -496,7 +496,7 @@ function clearGLP1File() {
     glp1UploadedJson = null;
     const input = document.getElementById('glp1FileInput');
     if (input) input.value = '';
-    
+
     document.getElementById('glp1DropContent').style.display = 'block';
     document.getElementById('glp1FileInfo').style.display = 'none';
     const statsEl = document.getElementById('glp1FileStats');
@@ -510,7 +510,7 @@ function clearGLP1File() {
 
 function escapeHTML(str) {
     if (!str) return '';
-    return str.replace(/[&<>'"]/g, 
+    return str.replace(/[&<>'"]/g,
         tag => ({
             '&': '&amp;',
             '<': '&lt;',
@@ -736,7 +736,7 @@ function renderRetention(d) {
     }
     const n = d.cohort_offsets || 8;
     table.querySelector('thead').innerHTML = '<tr><th>Cohort (week of)</th><th>Users</th>' +
-        Array.from({length: n}, (_, i) => `<th>Wk +${i + 1}</th>`).join('') + '</tr>';
+        Array.from({ length: n }, (_, i) => `<th>Wk +${i + 1}</th>`).join('') + '</tr>';
     table.querySelector('tbody').innerHTML = cohorts.map(c => {
         const cells = (c.retention_pct || []).map(v => {
             if (v == null) return '<td></td>';
@@ -1048,7 +1048,7 @@ async function loadSurveysList() {
             try {
                 const errData = await response.json();
                 detail = errData.detail || detail;
-            } catch (e) {}
+            } catch (e) { }
             throw new Error(detail);
         }
 
@@ -1136,8 +1136,8 @@ function renderSurveysTable(surveys) {
                 ${!survey.is_active ? `<button class="btn-ghost btn-ghost-brand" onclick="publishSurveyDirect('${survey.id}')">Publish</button>` : ''}
                 ${!survey.is_active ? `<button class="btn-ghost btn-ghost-danger" onclick="deleteSurveyDirect('${survey.id}')">Delete</button>` : ''}
                 ${survey.is_active && (survey.completed_count || 0) < (survey.max_responses || 100)
-                    ? `<button class="btn-ghost" onclick="notifyRemainingParticipants('${survey.id}')">🔔 Notify remaining</button>`
-                    : ''}
+                ? `<button class="btn-ghost" onclick="notifyRemainingParticipants('${survey.id}')">🔔 Notify remaining</button>`
+                : ''}
             </td>
         </tr>
     `;
@@ -1485,7 +1485,7 @@ function handleCustomQuestionsUpload(event) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         try {
             const parsed = JSON.parse(e.target.result);
             let categories = [];
@@ -1503,15 +1503,16 @@ function handleCustomQuestionsUpload(event) {
             const validCategories = categories.map((cat, cIdx) => {
                 const catName = cat.name || `Category ${cIdx + 1}`;
                 const questions = (cat.questions || []).map((q, qIdx) => {
-                    if (!q.title || !q.type) {
-                        throw new Error(`Question ${qIdx + 1} in category "${catName}" missing title or type.`);
+                    const qTitle = q.title || q.description || q.text;
+                    if (!qTitle || !q.type) {
+                        throw new Error(`Question ${qIdx + 1} in category "${catName}" missing title/description or type.`);
                     }
                     totalQuestions++;
                     return {
                         id: q.id || `cq_${cIdx + 1}_${qIdx + 1}`,
                         type: q.type,
-                        title: q.title,
-                        description: q.description || null,
+                        title: qTitle,
+                        description: q.description || qTitle,
                         required: q.required !== false,
                         data: q.data || {}
                     };
@@ -1558,7 +1559,7 @@ function renderCustomQuestionsPreview(categories) {
                 📁 ${cat.name} (${cat.questions.length})
             </div>
             <ul style="margin: 0; padding-left: 20px; font-size: 12px; color: var(--color-text-secondary);">
-                ${cat.questions.map(q => `<li><strong>[${q.type}]</strong> ${q.title}</li>`).join('')}
+                ${cat.questions.map(q => `<li><strong>[${q.type}]</strong> ${q.title || q.description || q.text}</li>`).join('')}
             </ul>
         `;
         container.appendChild(catDiv);
@@ -1657,7 +1658,8 @@ function validateSurveyStructure(structure) {
     }
 
     const locOf = (q, idx) => {
-        const title = q && q.title ? ` — "${truncateText(q.title, 60)}"` : '';
+        const titleText = q ? (q.title || q.description || q.text || '') : '';
+        const title = titleText ? ` — "${truncateText(titleText, 60)}"` : '';
         return `Q${idx + 1}${title}`;
     };
 
@@ -1674,8 +1676,8 @@ function validateSurveyStructure(structure) {
         if (!q.type) {
             errors.push({ code: 'missing_type', message: 'Missing required "type" field.', location: loc });
         }
-        if (!q.title) {
-            warnings.push({ code: 'missing_title', message: 'Question has no "title".', location: loc });
+        if (!q.title && !q.description && !q.text) {
+            warnings.push({ code: 'missing_title', message: 'Question has no "title" or "description".', location: loc });
         }
         if (q.order === undefined || q.order === null) {
             warnings.push({ code: 'missing_order', message: 'Question has no "order" field.', location: loc });
@@ -1687,7 +1689,7 @@ function validateSurveyStructure(structure) {
     questions.forEach((q, idx) => {
         if (q && q.id) {
             if (!idGroups[q.id]) idGroups[q.id] = [];
-            idGroups[q.id].push({ idx, title: q.title });
+            idGroups[q.id].push({ idx, title: q.title || q.description || q.text || '' });
         }
     });
     Object.entries(idGroups).forEach(([id, group]) => {
@@ -2168,7 +2170,7 @@ function showSurveyDetails(survey) {
             ` : '';
             return `
                 <div class="question-item">
-                    <strong>Q${idx + 1}:</strong> ${escapeHTML(q.title || q.label || q.text || 'Untitled Question')}
+                    <strong>Q${idx + 1}:</strong> ${escapeHTML(q.title || q.description || q.label || q.text || 'Untitled Question')}
                     <span class="question-type">(${q.type})</span>
                     ${optionsHTML}
                 </div>
@@ -2448,7 +2450,7 @@ async function loadSurveyMetrics(surveyId, excludeLowQuality = false) {
             try {
                 const errData = await response.json();
                 detail = errData.detail || detail;
-            } catch (e) {}
+            } catch (e) { }
             throw new Error(detail);
         }
 
@@ -2544,8 +2546,8 @@ async function loadSegmentComparison(surveyId, segmentKey, segmentValues) {
             `${API_BASE_URL}/api/v1/surveys/${surveyId}/metrics/segmented` +
             `?segment_key=${encodeURIComponent(segmentKey)}&segment_value=${encodeURIComponent(val)}`
         )
-        .then(r => r.ok ? r.json() : null)
-        .catch(() => null)
+            .then(r => r.ok ? r.json() : null)
+            .catch(() => null)
     );
 
     const results = await Promise.allSettled(fetches);
@@ -2569,18 +2571,18 @@ function renderSegmentComparison(segmentKey, segmentDataArray) {
     const segmentLabel = formatMetricLabel(segmentKey);
 
     const kpiMetricLabels = {
-        purchase_intent_percent:   { label: 'Purchase Intent',   icon: '🛒', unit: '%' },
-        clarity_score:             { label: 'Clarity Score',     icon: '💡', unit: '/5' },
-        visual_appeal_score:       { label: 'Visual Appeal',     icon: '🎨', unit: '/5' },
-        perceived_quality_score:   { label: 'Perceived Quality', icon: '⭐', unit: '/5' },
-        shelf_impact_score:        { label: 'Shelf Impact',      icon: '📦', unit: '/5' },
-        repeat_intent_percent:     { label: 'Repeat Intent',     icon: '🔄', unit: '%' },
-        appeal_score:              { label: 'Appeal',            icon: '❤️', unit: '' },
-        decision_time_median_ms:   { label: 'Decision Time',     icon: '⏱️', unit: 'ms' },
-        hesitation_rate_percent:   { label: 'Hesitation Rate',   icon: '🤔', unit: '%' },
-        hard_rejection_percent:    { label: 'Hard Rejection',    icon: '🚫', unit: '%' },
-        believability_score:       { label: 'Believability',     icon: '✅', unit: '/5' },
-        readability_index:         { label: 'Readability',       icon: '📖', unit: '/5' },
+        purchase_intent_percent: { label: 'Purchase Intent', icon: '🛒', unit: '%' },
+        clarity_score: { label: 'Clarity Score', icon: '💡', unit: '/5' },
+        visual_appeal_score: { label: 'Visual Appeal', icon: '🎨', unit: '/5' },
+        perceived_quality_score: { label: 'Perceived Quality', icon: '⭐', unit: '/5' },
+        shelf_impact_score: { label: 'Shelf Impact', icon: '📦', unit: '/5' },
+        repeat_intent_percent: { label: 'Repeat Intent', icon: '🔄', unit: '%' },
+        appeal_score: { label: 'Appeal', icon: '❤️', unit: '' },
+        decision_time_median_ms: { label: 'Decision Time', icon: '⏱️', unit: 'ms' },
+        hesitation_rate_percent: { label: 'Hesitation Rate', icon: '🤔', unit: '%' },
+        hard_rejection_percent: { label: 'Hard Rejection', icon: '🚫', unit: '%' },
+        believability_score: { label: 'Believability', icon: '✅', unit: '/5' },
+        readability_index: { label: 'Readability', icon: '📖', unit: '/5' },
     };
 
     // ── KPI comparison cards ─────────────────────────────────────────────
@@ -2620,8 +2622,8 @@ function renderSegmentComparison(segmentKey, segmentDataArray) {
         if (Object.keys(segConcepts).length > 0) {
             const cml = {
                 purchase_intent: { label: 'Purchase Intent', icon: '🛒' },
-                repeat_intent:   { label: 'Repeat Intent', icon: '🔄' },
-                appeal:          { label: 'Appeal', icon: '❤️' },
+                repeat_intent: { label: 'Repeat Intent', icon: '🔄' },
+                appeal: { label: 'Appeal', icon: '❤️' },
             };
             let breakdown = '';
             for (const concept of Object.values(segConcepts)) {
@@ -2783,10 +2785,10 @@ function parseRankingKey(keyStr) {
 function conceptAverages(concepts) {
     const MAP = {
         purchase_intent: 'purchase_intent_percent',
-        repeat_intent:   'repeat_intent_percent',
-        appeal:          'appeal_score',
-        hard_rejection:  'hard_rejection_percent',
-        decision_time:   'decision_time_median_ms',
+        repeat_intent: 'repeat_intent_percent',
+        appeal: 'appeal_score',
+        hard_rejection: 'hard_rejection_percent',
+        decision_time: 'decision_time_median_ms',
         hesitation_rate: 'hesitation_rate_percent',
     };
     const buckets = {};
@@ -2957,15 +2959,15 @@ function displayMetrics(data) {
                 <span class="kpi-label">Pick Rates</span>
                 <div class="pick-rates-list">
                     ${Object.entries(metrics.pick_rates).map(([option, pct]) => {
-                        const conceptLabel = concepts[option]?.label || option;
-                        return `<div class="pick-rate-item">
+            const conceptLabel = concepts[option]?.label || option;
+            return `<div class="pick-rate-item">
                             <span class="pick-rate-label">${conceptLabel}</span>
                             <div class="pick-rate-bar-bg">
                                 <div class="pick-rate-bar" style="width: ${pct}%"></div>
                             </div>
                             <span class="pick-rate-value">${pct.toFixed(1)}%</span>
                         </div>`;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>
         `;
@@ -3286,9 +3288,9 @@ async function loadRecentNotifications() {
                 </thead>
                 <tbody>
                     ${items.map(n => {
-                        const sentAt = new Date(n.created_at).toLocaleString();
-                        const preview = n.body.substring(0, 80) + (n.body.length > 80 ? '...' : '');
-                        return `
+            const sentAt = new Date(n.created_at).toLocaleString();
+            const preview = n.body.substring(0, 80) + (n.body.length > 80 ? '...' : '');
+            return `
                             <tr>
                                 <td>
                                     <strong>${n.title}</strong><br>
@@ -3299,7 +3301,7 @@ async function loadRecentNotifications() {
                                 <td>${sentAt}</td>
                             </tr>
                         `;
-                    }).join('')}
+        }).join('')}
                 </tbody>
             </table>
         `;

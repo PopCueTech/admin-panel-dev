@@ -14,7 +14,7 @@
 
 const PQ_QUESTION_TYPES = [
     { value: 'single_select', label: 'Single select' },
-    { value: 'multi_select',  label: 'Multi select' },
+    { value: 'multi_select', label: 'Multi select' },
     { value: 'mcq', label: 'Multiple choice' },
     { value: 'rating', label: 'Rating (1–5)' },
     { value: 'text', label: 'Text input' },
@@ -84,9 +84,9 @@ async function loadProfileQuestionnairesList() {
         const profileSurveys = (surveys || []).filter(s =>
             s.survey_kind === 'profile' ||
             (s.current_version &&
-             s.current_version.structure &&
-             s.current_version.structure.metadata &&
-             s.current_version.structure.metadata.kind === 'profile')
+                s.current_version.structure &&
+                s.current_version.structure.metadata &&
+                s.current_version.structure.metadata.kind === 'profile')
         );
 
         if (profileSurveys.length === 0) {
@@ -104,8 +104,8 @@ async function loadProfileQuestionnairesList() {
                 <td><strong>${escapePqHtml(s.title || 'Untitled')}</strong></td>
                 <td>${s.questions_count || 0}</td>
                 <td>${s.is_active
-                    ? '<span class="badge badge-success">Published</span>'
-                    : '<span class="badge badge-warning">Draft</span>'}</td>
+                ? '<span class="badge badge-success">Published</span>'
+                : '<span class="badge badge-warning">Draft</span>'}</td>
                 <td>${s.completed_count || 0}</td>
                 <td>${s.points || 0}</td>
                 <td style="font-size:12px; color:#666;">
@@ -114,13 +114,13 @@ async function loadProfileQuestionnairesList() {
                 <td style="display:flex; gap:6px; flex-wrap:wrap;">
                     <button class="btn-ghost" onclick="showProfileQuestionnaireDetail('${s.id}')">Review</button>
                     ${!s.is_active
-                        ? `<button class="btn-ghost btn-ghost-brand" onclick="publishProfileQuestionnaire('${s.id}')">Publish</button>`
-                        : `<button class="btn-ghost" onclick="unpublishProfileQuestionnaire('${s.id}')" style="color:#c62828;">Unpublish</button>`
-                    }
+                ? `<button class="btn-ghost btn-ghost-brand" onclick="publishProfileQuestionnaire('${s.id}')">Publish</button>`
+                : `<button class="btn-ghost" onclick="unpublishProfileQuestionnaire('${s.id}')" style="color:#c62828;">Unpublish</button>`
+            }
                     ${s.is_active
-                        ? `<button class="btn-ghost" onclick="alertRemainingProfileUsers('${s.id}')">🔔 Alert remaining</button>`
-                        : ''
-                    }
+                ? `<button class="btn-ghost" onclick="alertRemainingProfileUsers('${s.id}')">🔔 Alert remaining</button>`
+                : ''
+            }
                 </td>
             </tr>
         `).join('');
@@ -432,7 +432,7 @@ async function showProfileQuestionnaireDetail(surveyId) {
                 return `
                     <div style="background:#fff; border:1px solid #e5e7eb; border-radius:8px; padding:14px; margin-bottom:10px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                            <strong>Q${idx + 1}: ${escapePqHtml(q.title || q.label || q.text || 'Untitled')}</strong>
+                            <strong>Q${idx + 1}: ${escapePqHtml(q.title || q.description || q.label || q.text || 'Untitled')}</strong>
                             <div style="display:flex; gap:6px; flex-shrink:0;">
                                 <span style="font-size:0.8em; background:#f3f4f6; border-radius:4px; padding:2px 6px;">${escapePqHtml(q.type)}</span>
                                 ${q.required ? '<span style="font-size:0.8em; background:#fef3c7; border-radius:4px; padding:2px 6px;">required</span>' : ''}
