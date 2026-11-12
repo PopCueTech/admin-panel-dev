@@ -22,6 +22,10 @@ const FRAUD_RULE_LABELS = {
     ip_shared_redeem: 'Cash-outs from same IP',
     ip_multi_signup: 'Sign-up burst',
     referral_same_ip: 'Referral from same IP',
+    device_multi_account: 'Several accounts on one phone',
+    install_source: 'Cloned / side-loaded app',
+    install_source_unknown: 'Install source unknown',
+    non_us_timezone: 'Phone time zone outside US',
 };
 
 function _fraudRuleChip(rule, open = true) {
@@ -156,6 +160,7 @@ async function switchFraudTab(tab) {
         else if (tab === 'ips') await renderFraudIps(body);
         else if (tab === 'users') await renderFraudUsers(body);
         else if (tab === 'blocked') await renderFraudBlocked(body);
+        else if (tab === 'cleanup') renderFraudCleanup(body);
     } catch (error) {
         body.innerHTML = `<p style="text-align:center; padding:40px; color:#c62828;">Error: ${_esc(error.message)}</p>`;
     }
@@ -559,5 +564,164 @@ async function exportFraudCsv() {
         URL.revokeObjectURL(url);
     } catch (error) {
         showToast(`Export failed: ${error.message}`, 'error');
+    }
+}
+
+
+// ── clean-up: one-off passes over existing accounts ─────
+// Shared phones: oldest account keeps the phone, the rest go under review.
+// Cloned apps and non-US networks: preview, tick, block.
+function renderFraudCleanup(body) {
+    const card = (id, title, text, button) => `
+        <div style="border:1px solid #e5e7eb; border-radius:10px; padding:16px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:240px;"><h4 style="margin:0 0 4px;">${title}</h4>
+                    <div style="font-size:13px; color:#6b7280;">${text}</div></div>
+                ${button}
+            </div>
+            <div id="${id}" style="margin-top:12px;"></div>
+        </div>`;
+    body.innerHTML =
+        card('cleanupPhones', 'Shared phones',
+            'Phones with more than one account. The oldest account on each phone stays active; every other account goes under review (no surveys, no redemptions until approved).',
+            '<button class="btn btn-secondary btn-sm" onclick="previewSharedPhones(this)">Preview</button>') +
+        card('cleanupClones', 'Cloned-app accounts',
+            'Accounts whose phone reports an installer other than the Play Store or App Store (e.g. com.multiplebox.droidapps).',
+            '<button class="btn btn-secondary btn-sm" onclick="previewClonedApps(this)">Preview</button>') +
+        card('cleanupNonUs', 'Non-US accounts',
+            'Accounts seen on a non-US network in the last 90 days. Check the US activity column for real users who travelled before blocking.',
+            '<button class="btn btn-secondary btn-sm" onclick="previewNonUs(this)">Preview</button>');
+}
+
+function _cleanupBusy(btn, label) {
+    if (!btn) return () => {};
+    const old = btn.textContent;
+    btn.disabled = true; btn.textContent = label;
+    return () => { btn.disabled = false; btn.textContent = old; };
+}
+
+function _cleanupCheckAll(cls, checked) {
+    document.querySelectorAll('.' + cls).forEach(c => { if (!c.disabled) c.checked = checked; });
+}
+
+function _cleanupSelected(cls) {
+    return [...document.querySelectorAll('.' + cls + ':checked')].map(c => c.value);
+}
+
+// Shared phones
+async function previewSharedPhones(btn) {
+    const done = _cleanupBusy(btn, 'Loading…');
+    const el = document.getElementById('cleanupPhones');
+    try {
+        const d = await _fraudPost('/api/v1/admin/fraud/devices/sweep?dry_run=true', {});
+        const users = d.users || {};
+        const who = id => {
+            const u = users[id] || {};
+            return `<a href="#" onclick="openFraudUser('${id}'); return false;">${_esc(u.email || id)}</a> ${_fraudStatusBadge(u.account_status)}`;
+        };
+        const rows = (d.details || []).filter(p => p.accounts.length > 1).map(p => `<tr>
+            <td style="font-family:monospace; font-size:12px;">${_esc(p.device_id)}</td>
+            <td>${who(p.keeper)}<div style="font-size:11px; color:#6b7280;">joined ${_fmtDateShort((users[p.keeper] || {}).joined)}</div></td>
+            <td>${p.accounts.filter(a => a !== p.keeper).map(a => `<div>${who(a)}${p.held.includes(a) ? ' <span style="color:#92400e; font-size:11px;">→ under review</span>' : ''}</div>`).join('')}</td>
+            </tr>`);
+        const changes = (d.held_user_ids || []).length;
+        el.innerHTML =
+            `<div style="font-size:13px; margin-bottom:8px;"><strong>${rows.length}</strong> shared phone${rows.length === 1 ? '' : 's'} · <strong>${changes}</strong> account${changes === 1 ? '' : 's'} will go under review.</div>` +
+            _fraudTable('<th>Phone</th><th>Keeps the phone (oldest)</th><th>Other accounts</th>', rows, 'No shared phones.') +
+            (changes ? `<button class="btn btn-primary btn-sm" style="margin-top:10px; background:#92400e;" onclick="applySharedPhones(this, ${changes})">Put ${changes} account${changes === 1 ? '' : 's'} under review</button>` : '');
+    } catch (error) {
+        el.innerHTML = `<p style="color:#c62828;">${_esc(error.message)}</p>`;
+    } finally { done(); }
+}
+
+async function applySharedPhones(btn, n) {
+    if (!confirm(`Put ${n} account(s) under review? The oldest account on each phone stays active. You can approve any of them later from the Review queue.`)) return;
+    const done = _cleanupBusy(btn, 'Applying…');
+    try {
+        const d = await _fraudPost('/api/v1/admin/fraud/devices/sweep?dry_run=false', {});
+        showToast(`${(d.held_user_ids || []).length} account(s) put under review`, 'success');
+        await loadFraudSummary();
+        await previewSharedPhones(null);
+    } catch (error) {
+        showToast(`Failed: ${error.message}`, 'error');
+    } finally { done(); }
+}
+
+// Cloned apps
+async function previewClonedApps(btn) {
+    const done = _cleanupBusy(btn, 'Loading…');
+    const el = document.getElementById('cleanupClones');
+    try {
+        const d = await (await _fraudFetch('/api/v1/admin/fraud/install-source/accounts')).json();
+        const rows = (d.details || []).map(a => `<tr>
+            <td><input type="checkbox" class="cleanup-clone" value="${a.user_id}" checked></td>
+            <td><a href="#" onclick="openFraudUser('${a.user_id}'); return false;">${_esc(a.email)}</a></td>
+            <td style="font-family:monospace; font-size:12px;">${a.install_sources.map(_esc).join('<br>')}</td>
+            <td style="font-size:12px; color:#6b7280;">${_fmtDateShort(a.joined)}</td>
+            <td>${_fraudStatusBadge(a.account_status)}</td></tr>`);
+        el.innerHTML =
+            `<div style="font-size:13px; margin-bottom:8px;"><strong>${rows.length}</strong> account${rows.length === 1 ? '' : 's'} on a cloned or side-loaded app.</div>` +
+            _fraudTable(`<th><input type="checkbox" checked onclick="_cleanupCheckAll('cleanup-clone', this.checked)"></th><th>Account</th><th>Installer</th><th>Joined</th><th>Status</th>`,
+                rows, 'No cloned-app accounts.') +
+            (rows.length ? `<button class="btn btn-primary btn-sm" style="margin-top:10px; background:#991b1b;" onclick="blockCleanupSelected('cleanup-clone', 'Cloned / side-loaded app')">Block selected</button>` : '');
+    } catch (error) {
+        el.innerHTML = `<p style="color:#c62828;">${_esc(error.message)}</p>`;
+    } finally { done(); }
+}
+
+// Non-US
+async function previewNonUs(btn) {
+    const done = _cleanupBusy(btn, 'Loading… (can take a minute)');
+    const el = document.getElementById('cleanupNonUs');
+    try {
+        const d = await _fraudPost('/api/v1/admin/fraud/non-us/sweep', { dry_run: true });
+        const rows = (d.details || []).map(a => `<tr>
+            <td><input type="checkbox" class="cleanup-nonus" value="${a.user_id}" ${a.us_events ? '' : 'checked'}></td>
+            <td><a href="#" onclick="openFraudUser('${a.user_id}'); return false;">${_esc(a.email)}</a></td>
+            <td>${a.countries.map(_esc).join(', ')}<div style="font-size:11px; color:#6b7280; font-family:monospace;">${a.non_us_ips.slice(0, 3).map(_esc).join('<br>')}</div></td>
+            <td style="text-align:right;">${a.non_us_events}</td>
+            <td style="text-align:right; ${a.us_events ? 'color:#047857; font-weight:600;' : 'color:#9ca3af;'}">${a.us_events}</td>
+            <td style="font-size:12px; color:#6b7280;">${_fmtDateShort(a.last_non_us_at)}</td>
+            <td>${_fraudStatusBadge(a.account_status)}</td></tr>`);
+        el.innerHTML =
+            `<div style="font-size:13px; margin-bottom:8px;"><strong>${rows.length}</strong> account${rows.length === 1 ? '' : 's'} seen on non-US networks. Accounts that also have US activity are left unticked.</div>` +
+            _fraudTable(`<th><input type="checkbox" onclick="_cleanupCheckAll('cleanup-nonus', this.checked)"></th><th>Account</th><th>Countries</th><th style="text-align:right;">Non-US events</th><th style="text-align:right;">US events</th><th>Last non-US</th><th>Status</th>`,
+                rows, 'No non-US accounts.') +
+            (rows.length ? `<button class="btn btn-primary btn-sm" style="margin-top:10px; background:#991b1b;" onclick="blockNonUsSelected(this)">Block selected</button>` : '');
+    } catch (error) {
+        el.innerHTML = `<p style="color:#c62828;">${_esc(error.message)}</p>`;
+    } finally { done(); }
+}
+
+async function blockNonUsSelected(btn) {
+    const ids = _cleanupSelected('cleanup-nonus');
+    if (!ids.length) { showToast('Tick at least one account', 'error'); return; }
+    if (!confirm(`Block ${ids.length} account(s)? Unsent vouchers are cancelled, emails blacklisted, points frozen. Survey data is kept.`)) return;
+    const done = _cleanupBusy(btn, 'Blocking…');
+    try {
+        const d = await _fraudPost('/api/v1/admin/fraud/non-us/sweep', { dry_run: false, user_ids: ids, reason: 'Non-US network' });
+        const placed = (d.orders_already_placed || []).length;
+        showToast(`Blocked ${d.blocked.length}${placed ? ` · ${placed} voucher(s) already sent to Tremendous` : ''}`, 'success');
+        await loadFraudSummary();
+        await previewNonUs(null);
+    } catch (error) {
+        showToast(`Block failed: ${error.message}`, 'error');
+    } finally { done(); }
+}
+
+async function blockCleanupSelected(cls, reason) {
+    const ids = _cleanupSelected(cls);
+    if (!ids.length) { showToast('Tick at least one account', 'error'); return; }
+    if (!confirm(`Block ${ids.length} account(s)? Unsent vouchers are cancelled, emails blacklisted, points frozen. Survey data is kept.`)) return;
+    try {
+        const d = await _fraudPost('/api/v1/admin/users/block-bulk', {
+            user_ids: ids, reason, cancel_pending_redemptions: true, forfeit_points: false,
+            blacklist_email: true, blacklist_network: false,
+        });
+        showToast(`Blocked ${d.blocked.length} account(s)${d.skipped.length ? ` (${d.skipped.length} skipped)` : ''}`, 'success');
+        await loadFraudSummary();
+        await previewClonedApps(null);
+    } catch (error) {
+        showToast(`Block failed: ${error.message}`, 'error');
     }
 }
