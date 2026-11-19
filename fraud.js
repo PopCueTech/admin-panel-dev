@@ -25,6 +25,7 @@ const FRAUD_RULE_LABELS = {
     device_multi_account: 'Several accounts on one phone',
     install_source: 'Cloned / side-loaded app',
     install_source_unknown: 'Install source unknown',
+    app_check_fail: 'App Check failed (not genuine app / device)',
     non_us_timezone: 'Phone time zone outside US',
 };
 
