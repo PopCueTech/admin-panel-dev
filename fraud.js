@@ -9,7 +9,7 @@
 // ═════════════════════════════════════════════════════════
 
 let _fraudTab = 'review';
-let _fraudPage = { ips: 0, users: 0 };
+let _fraudPage = { ips: 0, users: 0, shadow: 0 };
 const FRAUD_PAGE_SIZE = 100;
 let _fraudBlockTarget = null;   // { userIds: [], ipBucket: null, label: '' }
 let _fraudControlsWired = false;
@@ -27,6 +27,7 @@ const FRAUD_RULE_LABELS = {
     install_source_unknown: 'Install source unknown',
     app_check_fail: 'App Check failed (not genuine app / device)',
     non_us_timezone: 'Phone time zone outside US',
+    network_would_block: 'Let through from cloud / non-US (shadow)',
 };
 
 function _fraudRuleChip(rule, open = true) {
@@ -102,11 +103,11 @@ function wireUpFraudControls() {
     const search = document.getElementById('fraudSearch');
     if (search) search.addEventListener('input', () => {
         clearTimeout(t);
-        t = setTimeout(() => { _fraudPage = { ips: 0, users: 0 }; switchFraudTab(_fraudTab); }, 300);
+        t = setTimeout(() => { _fraudPage = { ips: 0, users: 0, shadow: 0 }; switchFraudTab(_fraudTab); }, 300);
     });
     ['fraudRuleFilter', 'fraudStatusFilter'].forEach(id => {
         const el = document.getElementById(id);
-        if (el) el.addEventListener('change', () => { _fraudPage = { ips: 0, users: 0 }; switchFraudTab(_fraudTab); });
+        if (el) el.addEventListener('change', () => { _fraudPage = { ips: 0, users: 0, shadow: 0 }; switchFraudTab(_fraudTab); });
     });
 }
 
@@ -151,7 +152,7 @@ async function switchFraudTab(tab) {
     _fraudTab = tab;
     document.querySelectorAll('.fraud-tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     const filters = document.getElementById('fraudFilters');
-    if (filters) filters.style.display = (tab === 'ips' || tab === 'users') ? 'flex' : 'none';
+    if (filters) filters.style.display = (tab === 'ips' || tab === 'users' || tab === 'shadow') ? 'flex' : 'none';
     const statusFilter = document.getElementById('fraudStatusFilter');
     if (statusFilter) statusFilter.style.display = tab === 'users' ? '' : 'none';
     const body = document.getElementById('fraudTabBody');
@@ -160,6 +161,7 @@ async function switchFraudTab(tab) {
         if (tab === 'review') await renderFraudReviewQueue(body);
         else if (tab === 'ips') await renderFraudIps(body);
         else if (tab === 'users') await renderFraudUsers(body);
+        else if (tab === 'shadow') await renderFraudShadow(body);
         else if (tab === 'blocked') await renderFraudBlocked(body);
         else if (tab === 'cleanup') renderFraudCleanup(body);
     } catch (error) {
@@ -267,6 +269,59 @@ async function renderFraudUsers(body) {
         rows, 'No flagged users.') + _fraudPager('users', d.total_count || 0);
 }
 
+// Shadow: active accounts a rule caught but did not stop
+function _fraudModeChip(mode) {
+    const map = { shadow: ['#fef3c7', '#92400e', 'Shadow'], enforced: ['#dcfce7', '#166534', 'Enforced'], off: ['#f3f4f6', '#6b7280', 'Off'] };
+    const [bg, fg, label] = map[mode] || map.off;
+    return `<span style="display:inline-block; padding:1px 6px; border-radius:6px; font-size:10px; font-weight:700; background:${bg}; color:${fg};">${label}</span>`;
+}
+
+function _fraudFlagAccounts(f) {
+    const ids = ((f.evidence || {}).user_ids || []).filter(Boolean);
+    if (ids.length < 2) return '';
+    const links = ids.slice(0, 12).map(id => `<a href="#" onclick="openFraudUser('${_esc(id)}'); return false;" style="font-family:monospace; font-size:11px; margin-right:6px;">${_esc(id.slice(0, 8))}</a>`).join('');
+    return `<div style="font-size:11px; color:#6b7280; margin:2px 0 0 2px;">Accounts: ${links}${ids.length > 12 ? ` +${ids.length - 12} more` : ''}</div>`;
+}
+
+async function renderFraudShadow(body) {
+    const params = new URLSearchParams({ limit: FRAUD_PAGE_SIZE, offset: _fraudPage.shadow * FRAUD_PAGE_SIZE, days: 30 });
+    const rule = document.getElementById('fraudRuleFilter')?.value;
+    const q = document.getElementById('fraudSearch')?.value.trim();
+    if (rule) params.set('rule', rule);
+    if (q) params.set('q', q);
+    const d = await (await _fraudFetch(`/api/v1/admin/fraud/shadow?${params}`)).json();
+    const counts = d.counts || {};
+    const modes = (d.modes || []).map(m => `<div style="display:flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid #e5e7eb; border-radius:8px; background:#fff;" title="${_esc(m.would_do || '')}">
+        ${_fraudRuleChip(m.rule, m.mode !== 'off')} ${_fraudModeChip(m.mode)}
+        <span style="font-size:11px; color:#6b7280;">${counts[m.rule] || 0}</span></div>`).join('');
+    const rows = (d.items || []).map(u => {
+        const sigs = (u.shadow_signals || []).map(s => `<div style="padding:3px 0;">
+            ${_fraudRuleChip(s.rule)} ${_fraudModeChip(s.mode)}
+            <div style="font-size:12px; color:#374151; margin-top:2px;">${_esc(s.reason)}</div>
+            <div style="font-size:11px; color:#92400e;">If enforced: ${_esc(s.would_do)}</div></div>`).join('');
+        const dismiss = (u.shadow_signals || []).filter(s => s.flag_id).map(s =>
+            `<button class="btn btn-ghost btn-sm" title="Dismiss ${_esc(s.rule)}" onclick="dismissFraudFlag('${s.flag_id}')">Dismiss ${_esc(FRAUD_RULE_LABELS[s.rule] || s.rule)}</button>`).join('');
+        return `<tr>
+            <td>${_userCell(u)}<div style="font-size:11px; color:#9ca3af;">joined ${_fmtDateShort(u.created_at)}</div></td>
+            <td>${sigs}</td>
+            <td style="font-size:12px; color:#6b7280; white-space:nowrap;">${_fmtDate(u.last_signal_at)}</td>
+            <td style="text-align:right;">${_usd(u.redeemed_usd)}</td>
+            <td style="text-align:right;">${(u.points || 0).toLocaleString()}</td>
+            <td style="text-align:right;">
+                <div style="display:flex; flex-direction:column; gap:4px; align-items:flex-end;">
+                <button class="btn btn-secondary btn-sm" onclick="reviewFraudUser('${u.user_id}')">Put under review</button>
+                <button class="btn btn-ghost btn-sm btn-ghost-danger" onclick="openFraudBlock({userIds:['${u.user_id}'], label:'${_esc(u.email)}'})">Block</button>
+                ${dismiss}</div></td></tr>`;
+    });
+    body.innerHTML =
+        `<p style="font-size:13px; color:#4b5563; margin:2px 0 10px;">Active accounts a rule caught but did not stop, in the last ${d.days} days.
+            <strong>Shadow</strong> rules only record what they saw; <strong>Enforced</strong> rows are accounts flagged before the rule was enforced, or missed. Nothing here changes an account until you act.</p>` +
+        `<div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px;">${modes}</div>` +
+        _fraudTable('<th>User</th><th>Why (and what enforcing would do)</th><th>Last seen</th><th style="text-align:right;">Redeemed</th><th style="text-align:right;">Points</th><th></th>',
+            rows, 'No active accounts caught by a rule in this period.') +
+        _fraudPager('shadow', d.total_count || 0);
+}
+
 // Blocked
 async function renderFraudBlocked(body) {
     const d = await (await _fraudFetch('/api/v1/admin/fraud/blocked')).json();
@@ -359,7 +414,8 @@ async function openFraudUser(userId) {
             <td style="text-align:right; ${n.other_accounts ? 'color:#991b1b; font-weight:600;' : ''}">${n.other_accounts}</td>
             <td style="font-size:12px; color:#6b7280;">${_fmtDate(n.last_seen)}</td></tr>`).join('');
         const flags = (d.flags || []).map(f => `<div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0;">
-            <span>${_fraudRuleChip(f.rule, f.status === 'open')} <span style="font-size:11px; color:#9ca3af;">${_esc(f.status)} · ${_fmtDate(f.last_seen)}</span></span>
+            <span>${_fraudRuleChip(f.rule, f.status === 'open')} <span style="font-size:11px; color:#9ca3af;">${_esc(f.status)} · ${_fmtDate(f.last_seen)}</span>
+                ${f.summary ? `<div style="font-size:12px; color:#4b5563; margin:2px 0 0 2px;">${_esc(f.summary)}</div>` : ''}${_fraudFlagAccounts(f)}</span>
             ${f.status === 'open' ? `<button class="btn btn-ghost btn-sm" onclick="dismissFraudFlag('${f.id}')">Dismiss</button>` : ''}</div>`).join('');
         const ledger = (d.ledger || []).slice(0, 25).map(l => `<tr>
             <td style="font-size:11px; color:#6b7280; white-space:nowrap;">${_fmtDate(l.at)}</td>

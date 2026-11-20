@@ -1393,6 +1393,7 @@
                         <button type="button" class="btn btn-ghost btn-sm fraud-tab-btn geo-gran-btn active" data-tab="review">Review queue</button>
                         <button type="button" class="btn btn-ghost btn-sm fraud-tab-btn geo-gran-btn" data-tab="ips">Suspicious IPs</button>
                         <button type="button" class="btn btn-ghost btn-sm fraud-tab-btn geo-gran-btn" data-tab="users">Flagged users</button>
+                        <button type="button" class="btn btn-ghost btn-sm fraud-tab-btn geo-gran-btn" data-tab="shadow">Shadow</button>
                         <button type="button" class="btn btn-ghost btn-sm fraud-tab-btn geo-gran-btn" data-tab="blocked">Blocked</button>
                         <button type="button" class="btn btn-ghost btn-sm fraud-tab-btn geo-gran-btn" data-tab="cleanup">Clean-up</button>
                     </div>
@@ -1407,6 +1408,9 @@
                             <option value="ip_shared_redeem">Cash-outs from same IP</option>
                             <option value="ip_multi_signup">Sign-up burst</option>
                             <option value="referral_same_ip">Referral from same IP</option>
+                            <option value="device_multi_account">Several accounts on one phone</option>
+                            <option value="app_check_fail">App Check failed</option>
+                            <option value="network_would_block">Let through from cloud / non-US (shadow)</option>
                         </select>
                         <select id="fraudStatusFilter" style="padding:7px 10px; border:1px solid #e5e7eb; border-radius:6px; font-size:13px;">
                             <option value="">Any status</option>
